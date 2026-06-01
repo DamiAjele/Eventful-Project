@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from './modules/cache/cache.module';
+import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -24,6 +26,9 @@ import { CacheModule } from './modules/cache/cache.module';
       inject: [ConfigService],
     }),
     CacheModule,
+    // Auth and Users
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
