@@ -25,6 +25,15 @@ export class Ticket {
   @Column({ default: false })
   used!: boolean;
 
+  @Column({ type: 'text', nullable: true })
+  qrCodeUrl?: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  scannedAt?: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  scannedBy?: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 }

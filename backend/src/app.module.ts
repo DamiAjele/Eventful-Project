@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { EventsModule } from './modules/events/events.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { QrModule } from './modules/qr/qr.module';
 
 @Module({
   imports: [
@@ -37,6 +38,8 @@ import { PaymentsModule } from './modules/payments/payments.module';
     TicketsModule,
     // Payments
     PaymentsModule,
+    // QR codes
+    QrModule,
   ],
   controllers: [AppController],
   providers: [AppService],
