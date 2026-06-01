@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from './modules/cache/cache.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { EventsModule } from './modules/events/events.module';
@@ -30,6 +32,7 @@ import { QrModule } from './modules/qr/qr.module';
       inject: [ConfigService],
     }),
     CacheModule,
+    ScheduleModule.forRoot(),
     // Auth and Users
     UsersModule,
     AuthModule,
@@ -40,6 +43,7 @@ import { QrModule } from './modules/qr/qr.module';
     PaymentsModule,
     // QR codes
     QrModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
