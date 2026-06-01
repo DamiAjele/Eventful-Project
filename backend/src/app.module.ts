@@ -6,6 +6,8 @@ import { AppService } from './app.service';
 import { CacheModule } from './modules/cache/cache.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { EventsModule } from './modules/events/events.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
 
 @Module({
   imports: [
@@ -29,6 +31,9 @@ import { AuthModule } from './modules/auth/auth.module';
     // Auth and Users
     UsersModule,
     AuthModule,
+    // Events and Tickets
+    EventsModule,
+    TicketsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

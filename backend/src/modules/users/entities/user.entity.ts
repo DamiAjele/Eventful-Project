@@ -7,7 +7,8 @@ import {
 } from 'typeorm';
 
 export enum UserRole {
-  USER = 'user',
+  ATTENDEE = 'attendee',
+  CREATOR = 'creator',
   ADMIN = 'admin',
 }
 
@@ -28,7 +29,7 @@ export class User {
   @Column()
   password!: string;
 
-  @Column({ type: 'varchar', default: UserRole.USER })
+  @Column({ type: 'varchar', default: UserRole.ATTENDEE })
   role!: UserRole;
 
   @Column({ type: 'text', nullable: true })
