@@ -8,23 +8,23 @@ Build **Eventful**, a monolithic NestJS (TypeScript) backend for an event ticket
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Runtime | Node.js 20+ |
-| Framework | NestJS (TypeScript) |
-| Database | PostgreSQL via Neon DB |
-| ORM | TypeORM |
-| Cache | Redis (ioredis) |
-| Auth | JWT + Passport.js |
-| Payments | Paystack |
-| QR Codes | `qrcode` npm package |
-| Notifications | node-cron + nodemailer (or Resend) |
-| File Storage | Cloudinary (for event images) |
-| Rate Limiting | `@nestjs/throttler` |
-| Validation | `class-validator` + `class-transformer` |
-| Testing | Jest (unit + integration) |
-| API Docs | Swagger (`@nestjs/swagger`) |
-| Logging | Winston or Pino |
+| Layer         | Technology                              |
+| ------------- | --------------------------------------- |
+| Runtime       | Node.js 20+                             |
+| Framework     | NestJS (TypeScript)                     |
+| Database      | PostgreSQL via Neon DB                  |
+| ORM           | TypeORM                                 |
+| Cache         | Redis (ioredis)                         |
+| Auth          | JWT + Passport.js                       |
+| Payments      | Paystack                                |
+| QR Codes      | `qrcode` npm package                    |
+| Notifications | node-cron + nodemailer (or Resend)      |
+| File Storage  | Cloudinary (for event images)           |
+| Rate Limiting | `@nestjs/throttler`                     |
+| Validation    | `class-validator` + `class-transformer` |
+| Testing       | Jest (unit + integration)               |
+| API Docs      | Swagger (`@nestjs/swagger`)             |
+| Logging       | Winston or Pino                         |
 
 ---
 
@@ -118,6 +118,14 @@ CLOUDINARY_API_SECRET=your-api-secret
 # Rate Limiting
 THROTTLE_TTL=60
 THROTTLE_LIMIT=100
+
+## Implementation status (auto-updated)
+
+- Rate limiting: Implemented via `@nestjs/throttler` with global defaults and per-endpoint `@Throttle` overrides (auth, payments, notifications).
+- Global error handling: Implemented `HttpExceptionFilter` at `src/common/filters/http-exception.filter.ts` and registered globally.
+- Swagger: Setup added in `src/main.ts` and exposed at `/api/docs` in non-production environments.
+- Notes: Update `.env.example` with `THROTTLE_TTL` and `THROTTLE_LIMIT` to tune rate limits.
+
 ```
 
 ---
@@ -129,18 +137,23 @@ THROTTLE_LIMIT=100
 ```typescript
 // src/modules/users/entities/user.entity.ts
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, OneToMany, BeforeInsert
-} from 'typeorm';
-import * as bcrypt from 'bcryptjs';
-import { UserRole } from '../../../common/enums/user-role.enum';
-import { Event } from '../../events/entities/event.entity';
-import { Ticket } from '../../tickets/entities/ticket.entity';
-import { Notification } from '../../notifications/entities/notification.entity';
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+  BeforeInsert,
+} from "typeorm";
+import * as bcrypt from "bcryptjs";
+import { UserRole } from "../../../common/enums/user-role.enum";
+import { Event } from "../../events/entities/event.entity";
+import { Ticket } from "../../tickets/entities/ticket.entity";
+import { Notification } from "../../notifications/entities/notification.entity";
 
-@Entity('users')
+@Entity("users")
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
@@ -155,7 +168,7 @@ export class User {
   @Column({ select: false })
   password: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.EVENTEE })
+  @Column({ type: "enum", enum: UserRole, default: UserRole.EVENTEE })
   role: UserRole;
 
   @Column({ nullable: true })
@@ -213,25 +226,32 @@ export class User {
 ```typescript
 // src/modules/events/entities/event.entity.ts
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, ManyToOne, OneToMany, JoinColumn, Index
-} from 'typeorm';
-import { EventStatus } from '../../../common/enums/event-status.enum';
-import { User } from '../../users/entities/user.entity';
-import { Ticket } from '../../tickets/entities/ticket.entity';
-import { TicketTier } from './ticket-tier.entity';
-import { EventReminder } from '../../notifications/entities/event-reminder.entity';
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  Index,
+} from "typeorm";
+import { EventStatus } from "../../../common/enums/event-status.enum";
+import { User } from "../../users/entities/user.entity";
+import { Ticket } from "../../tickets/entities/ticket.entity";
+import { TicketTier } from "./ticket-tier.entity";
+import { EventReminder } from "../../notifications/entities/event-reminder.entity";
 
-@Entity('events')
-@Index(['status', 'startDate'])
+@Entity("events")
+@Index(["status", "startDate"])
 export class Event {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
   title: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: "text" })
   description: string;
 
   @Column({ nullable: true })
@@ -255,19 +275,19 @@ export class Event {
   @Column({ nullable: true })
   longitude: number;
 
-  @Column({ type: 'timestamptz' })
+  @Column({ type: "timestamptz" })
   startDate: Date;
 
-  @Column({ type: 'timestamptz' })
+  @Column({ type: "timestamptz" })
   endDate: Date;
 
-  @Column({ type: 'enum', enum: EventStatus, default: EventStatus.DRAFT })
+  @Column({ type: "enum", enum: EventStatus, default: EventStatus.DRAFT })
   status: EventStatus;
 
   @Column({ default: false })
   isFeatured: boolean;
 
-  @Column({ type: 'simple-array', nullable: true })
+  @Column({ type: "simple-array", nullable: true })
   tags: string[];
 
   @Column({ nullable: true })
@@ -277,11 +297,11 @@ export class Event {
   shareableSlug: string;
 
   // Creator-set default reminder (in hours before event)
-  @Column({ type: 'int', array: true, default: [] })
+  @Column({ type: "int", array: true, default: [] })
   defaultReminderOffsets: number[];
 
   @ManyToOne(() => User, (user) => user.createdEvents, { eager: false })
-  @JoinColumn({ name: 'creatorId' })
+  @JoinColumn({ name: "creatorId" })
   creator: User;
 
   @Column()
@@ -309,22 +329,26 @@ export class Event {
 ```typescript
 // src/modules/events/entities/ticket-tier.entity.ts
 import {
-  Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn
-} from 'typeorm';
-import { Event } from './event.entity';
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { Event } from "./event.entity";
 
-@Entity('ticket_tiers')
+@Entity("ticket_tiers")
 export class TicketTier {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
   name: string; // e.g. VIP, General, Early Bird
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   description: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({ type: "decimal", precision: 10, scale: 2, default: 0 })
   price: number;
 
   @Column()
@@ -342,8 +366,8 @@ export class TicketTier {
   @Column({ default: true })
   isActive: boolean;
 
-  @ManyToOne(() => Event, (event) => event.ticketTiers, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'eventId' })
+  @ManyToOne(() => Event, (event) => event.ticketTiers, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "eventId" })
   event: Event;
 
   @Column()
@@ -360,25 +384,30 @@ export class TicketTier {
 ```typescript
 // src/modules/tickets/entities/ticket.entity.ts
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  ManyToOne, JoinColumn, Index
-} from 'typeorm';
-import { TicketStatus } from '../../../common/enums/ticket-status.enum';
-import { User } from '../../users/entities/user.entity';
-import { Event } from '../../events/entities/event.entity';
-import { TicketTier } from '../../events/entities/ticket-tier.entity';
-import { Payment } from '../../payments/entities/payment.entity';
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from "typeorm";
+import { TicketStatus } from "../../../common/enums/ticket-status.enum";
+import { User } from "../../users/entities/user.entity";
+import { Event } from "../../events/entities/event.entity";
+import { TicketTier } from "../../events/entities/ticket-tier.entity";
+import { Payment } from "../../payments/entities/payment.entity";
 
-@Entity('tickets')
-@Index(['ticketCode'], { unique: true })
+@Entity("tickets")
+@Index(["ticketCode"], { unique: true })
 export class Ticket {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
   ticketCode: string; // e.g. EVT-2024-XXXXXX
 
-  @Column({ type: 'enum', enum: TicketStatus, default: TicketStatus.ACTIVE })
+  @Column({ type: "enum", enum: TicketStatus, default: TicketStatus.ACTIVE })
   status: TicketStatus;
 
   @Column({ nullable: true })
@@ -394,34 +423,34 @@ export class Ticket {
   scannedByUserId: string;
 
   @ManyToOne(() => User, (user) => user.tickets, { eager: false })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: "userId" })
   user: User;
 
   @Column()
   userId: string;
 
   @ManyToOne(() => Event, (event) => event.tickets, { eager: false })
-  @JoinColumn({ name: 'eventId' })
+  @JoinColumn({ name: "eventId" })
   event: Event;
 
   @Column()
   eventId: string;
 
   @ManyToOne(() => TicketTier, { eager: false })
-  @JoinColumn({ name: 'ticketTierId' })
+  @JoinColumn({ name: "ticketTierId" })
   ticketTier: TicketTier;
 
   @Column()
   ticketTierId: string;
 
   @ManyToOne(() => Payment, (payment) => payment.tickets, { eager: false })
-  @JoinColumn({ name: 'paymentId' })
+  @JoinColumn({ name: "paymentId" })
   payment: Payment;
 
   @Column({ nullable: true })
   paymentId: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: "decimal", precision: 10, scale: 2 })
   pricePaid: number;
 
   @CreateDateColumn()
@@ -434,17 +463,23 @@ export class Ticket {
 ```typescript
 // src/modules/payments/entities/payment.entity.ts
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, ManyToOne, OneToMany, JoinColumn
-} from 'typeorm';
-import { PaymentStatus } from '../../../common/enums/payment-status.enum';
-import { User } from '../../users/entities/user.entity';
-import { Event } from '../../events/entities/event.entity';
-import { Ticket } from '../../tickets/entities/ticket.entity';
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from "typeorm";
+import { PaymentStatus } from "../../../common/enums/payment-status.enum";
+import { User } from "../../users/entities/user.entity";
+import { Event } from "../../events/entities/event.entity";
+import { Ticket } from "../../tickets/entities/ticket.entity";
 
-@Entity('payments')
+@Entity("payments")
 export class Payment {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
@@ -453,30 +488,30 @@ export class Payment {
   @Column({ nullable: true })
   paystackTransactionId: string;
 
-  @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
+  @Column({ type: "enum", enum: PaymentStatus, default: PaymentStatus.PENDING })
   status: PaymentStatus;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: "decimal", precision: 10, scale: 2 })
   amount: number;
 
-  @Column({ default: 'NGN' })
+  @Column({ default: "NGN" })
   currency: string;
 
-  @Column({ nullable: true, type: 'jsonb' })
+  @Column({ nullable: true, type: "jsonb" })
   paystackResponse: object;
 
   @Column({ nullable: true })
   paidAt: Date;
 
   @ManyToOne(() => User, { eager: false })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: "userId" })
   user: User;
 
   @Column()
   userId: string;
 
   @ManyToOne(() => Event, { eager: false })
-  @JoinColumn({ name: 'eventId' })
+  @JoinColumn({ name: "eventId" })
   event: Event;
 
   @Column()
@@ -485,7 +520,7 @@ export class Payment {
   @OneToMany(() => Ticket, (ticket) => ticket.payment)
   tickets: Ticket[];
 
-  @Column({ type: 'int', default: 1 })
+  @Column({ type: "int", default: 1 })
   quantity: number;
 
   @Column()
@@ -504,20 +539,24 @@ export class Payment {
 ```typescript
 // src/modules/notifications/entities/notification.entity.ts
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  ManyToOne, JoinColumn
-} from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { User } from "../../users/entities/user.entity";
 
-@Entity('notifications')
+@Entity("notifications")
 export class Notification {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
   title: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: "text" })
   message: string;
 
   @Column({ default: false })
@@ -529,8 +568,8 @@ export class Notification {
   @Column({ nullable: true })
   type: string; // 'reminder', 'ticket_purchased', 'event_update', etc.
 
-  @ManyToOne(() => User, (user) => user.notifications, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, (user) => user.notifications, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "userId" })
   user: User;
 
   @Column()
@@ -542,14 +581,19 @@ export class Notification {
 
 // src/modules/notifications/entities/event-reminder.entity.ts
 import {
-  Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn
-} from 'typeorm';
-import { Event } from '../../events/entities/event.entity';
-import { User } from '../../users/entities/user.entity';
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+} from "typeorm";
+import { Event } from "../../events/entities/event.entity";
+import { User } from "../../users/entities/user.entity";
 
-@Entity('event_reminders')
+@Entity("event_reminders")
 export class EventReminder {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ nullable: true })
@@ -558,7 +602,7 @@ export class EventReminder {
   @Column()
   eventId: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   offsetHours: number; // hours before event to send reminder
 
   @Column({ default: false })
@@ -567,15 +611,15 @@ export class EventReminder {
   @Column({ nullable: true })
   sentAt: Date;
 
-  @Column({ type: 'timestamptz' })
+  @Column({ type: "timestamptz" })
   scheduledFor: Date; // actual datetime to send
 
-  @ManyToOne(() => Event, (event) => event.reminders, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'eventId' })
+  @ManyToOne(() => Event, (event) => event.reminders, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "eventId" })
   event: Event;
 
-  @ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, { nullable: true, onDelete: "CASCADE" })
+  @JoinColumn({ name: "userId" })
   user: User;
 
   @CreateDateColumn()
@@ -600,8 +644,8 @@ export class EventReminder {
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
-        secret: config.get('JWT_SECRET'),
-        signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') },
+        secret: config.get("JWT_SECRET"),
+        signOptions: { expiresIn: config.get("JWT_EXPIRES_IN") },
       }),
       inject: [ConfigService],
     }),
@@ -626,7 +670,7 @@ export class AuthService {
 
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
     const existing = await this.usersService.findByEmail(dto.email);
-    if (existing) throw new ConflictException('Email already in use');
+    if (existing) throw new ConflictException("Email already in use");
 
     const user = await this.usersService.create(dto);
     const tokens = await this.generateTokens(user);
@@ -638,7 +682,7 @@ export class AuthService {
   async login(dto: LoginDto): Promise<AuthResponseDto> {
     const user = await this.usersService.findByEmailWithPassword(dto.email);
     if (!user || !(await user.validatePassword(dto.password))) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     const tokens = await this.generateTokens(user);
@@ -661,7 +705,7 @@ export class AuthService {
     if (!user?.refreshToken) throw new UnauthorizedException();
 
     const tokenMatches = await bcrypt.compare(refreshToken, user.refreshToken);
-    if (!tokenMatches) throw new UnauthorizedException('Invalid refresh token');
+    if (!tokenMatches) throw new UnauthorizedException("Invalid refresh token");
 
     const tokens = await this.generateTokens(user);
     await this.saveRefreshToken(user.id, tokens.refreshToken);
@@ -674,8 +718,8 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN'),
+        secret: this.configService.get("JWT_REFRESH_SECRET"),
+        expiresIn: this.configService.get("JWT_REFRESH_EXPIRES_IN"),
       }),
     ]);
 
@@ -690,7 +734,8 @@ export class AuthService {
   }
 
   private sanitizeUser(user: User) {
-    const { password, refreshToken, emailVerificationToken, ...rest } = user as any;
+    const { password, refreshToken, emailVerificationToken, ...rest } =
+      user as any;
     return rest;
   }
 }
@@ -698,40 +743,40 @@ export class AuthService {
 
 ```typescript
 // src/modules/auth/auth.controller.ts
-@ApiTags('Auth')
-@Controller('auth')
+@ApiTags("Auth")
+@Controller("auth")
 @UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register')
-  @ApiOperation({ summary: 'Register a new user (creator or eventee)' })
+  @Post("register")
+  @ApiOperation({ summary: "Register a new user (creator or eventee)" })
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
-  @Post('login')
-  @ApiOperation({ summary: 'Login and receive JWT tokens' })
+  @Post("login")
+  @ApiOperation({ summary: "Login and receive JWT tokens" })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
 
-  @Post('logout')
+  @Post("logout")
   @UseGuards(JwtAuthGuard)
   async logout(@CurrentUser() user: User) {
     return this.authService.logout(user.id);
   }
 
-  @Post('refresh')
+  @Post("refresh")
   @UseGuards(RefreshTokenGuard)
   async refreshTokens(@CurrentUser() user: any) {
     return this.authService.refreshTokens(user.sub, user.refreshToken);
   }
 
-  @Get('me')
+  @Get("me")
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Get current authenticated user' })
+  @ApiOperation({ summary: "Get current authenticated user" })
   async getMe(@CurrentUser() user: User) {
     return user;
   }
@@ -765,7 +810,11 @@ export class LoginDto {
 ```typescript
 // src/modules/events/events.module.ts
 @Module({
-  imports: [TypeOrmModule.forFeature([Event, TicketTier]), CacheModule, UsersModule],
+  imports: [
+    TypeOrmModule.forFeature([Event, TicketTier]),
+    CacheModule,
+    UsersModule,
+  ],
   controllers: [EventsController],
   providers: [EventsService],
   exports: [EventsService],
@@ -810,25 +859,34 @@ export class EventsService {
 
   async findAll(filters: EventFilterDto): Promise<PaginatedResult<Event>> {
     const cacheKey = `events:list:${JSON.stringify(filters)}`;
-    const cached = await this.cacheService.get<PaginatedResult<Event>>(cacheKey);
+    const cached =
+      await this.cacheService.get<PaginatedResult<Event>>(cacheKey);
     if (cached) return cached;
 
     const qb = this.eventRepo
-      .createQueryBuilder('event')
-      .leftJoinAndSelect('event.creator', 'creator')
-      .leftJoinAndSelect('event.ticketTiers', 'tiers')
-      .where('event.status = :status', { status: EventStatus.PUBLISHED });
+      .createQueryBuilder("event")
+      .leftJoinAndSelect("event.creator", "creator")
+      .leftJoinAndSelect("event.ticketTiers", "tiers")
+      .where("event.status = :status", { status: EventStatus.PUBLISHED });
 
-    if (filters.category) qb.andWhere('event.category = :category', { category: filters.category });
-    if (filters.city) qb.andWhere('event.city ILIKE :city', { city: `%${filters.city}%` });
+    if (filters.category)
+      qb.andWhere("event.category = :category", { category: filters.category });
+    if (filters.city)
+      qb.andWhere("event.city ILIKE :city", { city: `%${filters.city}%` });
     if (filters.search) {
-      qb.andWhere('(event.title ILIKE :search OR event.description ILIKE :search)', {
-        search: `%${filters.search}%`,
-      });
+      qb.andWhere(
+        "(event.title ILIKE :search OR event.description ILIKE :search)",
+        {
+          search: `%${filters.search}%`,
+        },
+      );
     }
-    if (filters.startDate) qb.andWhere('event.startDate >= :startDate', { startDate: filters.startDate });
+    if (filters.startDate)
+      qb.andWhere("event.startDate >= :startDate", {
+        startDate: filters.startDate,
+      });
 
-    qb.orderBy('event.startDate', 'ASC')
+    qb.orderBy("event.startDate", "ASC")
       .skip((filters.page - 1) * filters.limit)
       .take(filters.limit);
 
@@ -852,9 +910,9 @@ export class EventsService {
 
     const event = await this.eventRepo.findOne({
       where: { id },
-      relations: ['creator', 'ticketTiers'],
+      relations: ["creator", "ticketTiers"],
     });
-    if (!event) throw new NotFoundException('Event not found');
+    if (!event) throw new NotFoundException("Event not found");
 
     await this.cacheService.set(cacheKey, event, 600);
     return event;
@@ -863,33 +921,48 @@ export class EventsService {
   async findBySlug(slug: string): Promise<Event> {
     const event = await this.eventRepo.findOne({
       where: { shareableSlug: slug },
-      relations: ['creator', 'ticketTiers'],
+      relations: ["creator", "ticketTiers"],
     });
-    if (!event) throw new NotFoundException('Event not found');
+    if (!event) throw new NotFoundException("Event not found");
     return event;
   }
 
-  async findByCreator(creatorId: string, filters: PaginationDto): Promise<PaginatedResult<Event>> {
+  async findByCreator(
+    creatorId: string,
+    filters: PaginationDto,
+  ): Promise<PaginatedResult<Event>> {
     const cacheKey = `creator_events:${creatorId}:${filters.page}`;
-    const cached = await this.cacheService.get<PaginatedResult<Event>>(cacheKey);
+    const cached =
+      await this.cacheService.get<PaginatedResult<Event>>(cacheKey);
     if (cached) return cached;
 
     const [data, total] = await this.eventRepo.findAndCount({
       where: { creatorId },
-      relations: ['ticketTiers'],
-      order: { createdAt: 'DESC' },
+      relations: ["ticketTiers"],
+      order: { createdAt: "DESC" },
       skip: (filters.page - 1) * filters.limit,
       take: filters.limit,
     });
 
-    const result = { data, total, page: filters.page, limit: filters.limit, totalPages: Math.ceil(total / filters.limit) };
+    const result = {
+      data,
+      total,
+      page: filters.page,
+      limit: filters.limit,
+      totalPages: Math.ceil(total / filters.limit),
+    };
     await this.cacheService.set(cacheKey, result, 120);
     return result;
   }
 
-  async update(id: string, dto: UpdateEventDto, userId: string): Promise<Event> {
+  async update(
+    id: string,
+    dto: UpdateEventDto,
+    userId: string,
+  ): Promise<Event> {
     const event = await this.findById(id);
-    if (event.creatorId !== userId) throw new ForbiddenException('Not your event');
+    if (event.creatorId !== userId)
+      throw new ForbiddenException("Not your event");
 
     Object.assign(event, dto);
     const updated = await this.eventRepo.save(event);
@@ -915,10 +988,10 @@ export class EventsService {
 
     // Return from ticket data
     const attendees = await this.eventRepo
-      .createQueryBuilder('event')
-      .leftJoinAndSelect('event.tickets', 'ticket')
-      .leftJoinAndSelect('ticket.user', 'user')
-      .where('event.id = :eventId', { eventId })
+      .createQueryBuilder("event")
+      .leftJoinAndSelect("event.tickets", "ticket")
+      .leftJoinAndSelect("ticket.user", "user")
+      .where("event.id = :eventId", { eventId })
       .getOne();
 
     await this.cacheService.set(cacheKey, attendees, 60);
@@ -939,82 +1012,94 @@ export class EventsService {
   }
 
   private generateSlug(title: string): string {
-    return title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '') + '-' + nanoid(8);
+    return (
+      title
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w-]+/g, "") +
+      "-" +
+      nanoid(8)
+    );
   }
 }
 ```
 
 ```typescript
 // src/modules/events/events.controller.ts
-@ApiTags('Events')
-@Controller('events')
+@ApiTags("Events")
+@Controller("events")
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
-  @ApiOperation({ summary: 'Create a new event (creators only)' })
+  @ApiOperation({ summary: "Create a new event (creators only)" })
   create(@Body() dto: CreateEventDto, @CurrentUser() user: User) {
     return this.eventsService.create(dto, user.id);
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all published events with filters' })
+  @ApiOperation({ summary: "List all published events with filters" })
   findAll(@Query() filters: EventFilterDto) {
     return this.eventsService.findAll(filters);
   }
 
-  @Get('my-events')
+  @Get("my-events")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
-  @ApiOperation({ summary: 'Get events created by current creator' })
+  @ApiOperation({ summary: "Get events created by current creator" })
   getMyEvents(@CurrentUser() user: User, @Query() pagination: PaginationDto) {
     return this.eventsService.findByCreator(user.id, pagination);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get event by ID' })
-  findById(@Param('id', ParseUUIDPipe) id: string) {
+  @Get(":id")
+  @ApiOperation({ summary: "Get event by ID" })
+  findById(@Param("id", ParseUUIDPipe) id: string) {
     return this.eventsService.findById(id);
   }
 
-  @Get('slug/:slug')
-  @ApiOperation({ summary: 'Get event by shareable slug' })
-  findBySlug(@Param('slug') slug: string) {
+  @Get("slug/:slug")
+  @ApiOperation({ summary: "Get event by shareable slug" })
+  findBySlug(@Param("slug") slug: string) {
     return this.eventsService.findBySlug(slug);
   }
 
-  @Patch(':id')
+  @Patch(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: UpdateEventDto,
     @CurrentUser() user: User,
   ) {
     return this.eventsService.update(id, dto, user.id);
   }
 
-  @Post(':id/publish')
+  @Post(":id/publish")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
-  publish(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+  publish(@Param("id", ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.eventsService.publish(id, user.id);
   }
 
-  @Get(':id/attendees')
+  @Get(":id/attendees")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
-  @ApiOperation({ summary: 'Get attendees for an event (creator only)' })
-  getAttendees(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+  @ApiOperation({ summary: "Get attendees for an event (creator only)" })
+  getAttendees(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
     return this.eventsService.getEventAttendees(id, user.id);
   }
 
-  @Get(':id/share')
-  @ApiOperation({ summary: 'Get shareable links for an event' })
-  getShareLinks(@Param('id', ParseUUIDPipe) id: string) {
-    return this.eventsService.findById(id).then((e) => this.eventsService.getShareableLinks(e));
+  @Get(":id/share")
+  @ApiOperation({ summary: "Get shareable links for an event" })
+  getShareLinks(@Param("id", ParseUUIDPipe) id: string) {
+    return this.eventsService
+      .findById(id)
+      .then((e) => this.eventsService.getShareableLinks(e));
   }
 }
 ```
@@ -1027,7 +1112,7 @@ export class EventsController {
 // src/modules/payments/payments.service.ts
 @Injectable()
 export class PaymentsService {
-  private readonly paystackBaseUrl = 'https://api.paystack.co';
+  private readonly paystackBaseUrl = "https://api.paystack.co";
 
   constructor(
     @InjectRepository(Payment)
@@ -1046,11 +1131,11 @@ export class PaymentsService {
   async initializePayment(dto: InitializePaymentDto, userId: string) {
     const tier = await this.tierRepo.findOne({
       where: { id: dto.ticketTierId },
-      relations: ['event'],
+      relations: ["event"],
     });
-    if (!tier) throw new NotFoundException('Ticket tier not found');
+    if (!tier) throw new NotFoundException("Ticket tier not found");
     if (tier.availableQuantity < dto.quantity) {
-      throw new BadRequestException('Not enough tickets available');
+      throw new BadRequestException("Not enough tickets available");
     }
 
     const amount = tier.price * dto.quantity * 100; // Paystack uses kobo
@@ -1061,7 +1146,7 @@ export class PaymentsService {
       this.paymentRepo.create({
         reference,
         amount: tier.price * dto.quantity,
-        currency: 'NGN',
+        currency: "NGN",
         status: PaymentStatus.PENDING,
         userId,
         eventId: tier.eventId,
@@ -1079,7 +1164,7 @@ export class PaymentsService {
           email: user.email,
           amount,
           reference,
-          callback_url: `${this.configService.get('FRONTEND_URL')}/payment/verify`,
+          callback_url: `${this.configService.get("FRONTEND_URL")}/payment/verify`,
           metadata: {
             paymentId: payment.id,
             eventId: tier.eventId,
@@ -1090,8 +1175,8 @@ export class PaymentsService {
         },
         {
           headers: {
-            Authorization: `Bearer ${this.configService.get('PAYSTACK_SECRET_KEY')}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.configService.get("PAYSTACK_SECRET_KEY")}`,
+            "Content-Type": "application/json",
           },
         },
       ),
@@ -1107,37 +1192,43 @@ export class PaymentsService {
 
   async verifyPayment(reference: string) {
     const payment = await this.paymentRepo.findOne({ where: { reference } });
-    if (!payment) throw new NotFoundException('Payment not found');
+    if (!payment) throw new NotFoundException("Payment not found");
     if (payment.status === PaymentStatus.SUCCESS) {
-      return { message: 'Payment already verified', payment };
+      return { message: "Payment already verified", payment };
     }
 
     const response = await firstValueFrom(
-      this.httpService.get(`${this.paystackBaseUrl}/transaction/verify/${reference}`, {
-        headers: { Authorization: `Bearer ${this.configService.get('PAYSTACK_SECRET_KEY')}` },
-      }),
+      this.httpService.get(
+        `${this.paystackBaseUrl}/transaction/verify/${reference}`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.configService.get("PAYSTACK_SECRET_KEY")}`,
+          },
+        },
+      ),
     );
 
     const txn = response.data.data;
-    if (txn.status === 'success') {
+    if (txn.status === "success") {
       return this.fulfillPayment(payment, txn);
     } else {
       payment.status = PaymentStatus.FAILED;
       await this.paymentRepo.save(payment);
-      throw new BadRequestException('Payment verification failed');
+      throw new BadRequestException("Payment verification failed");
     }
   }
 
   async handleWebhook(payload: any, signature: string) {
     // Validate Paystack webhook signature
     const hash = crypto
-      .createHmac('sha512', this.configService.get('PAYSTACK_WEBHOOK_SECRET'))
+      .createHmac("sha512", this.configService.get("PAYSTACK_WEBHOOK_SECRET"))
       .update(JSON.stringify(payload))
-      .digest('hex');
+      .digest("hex");
 
-    if (hash !== signature) throw new UnauthorizedException('Invalid webhook signature');
+    if (hash !== signature)
+      throw new UnauthorizedException("Invalid webhook signature");
 
-    if (payload.event === 'charge.success') {
+    if (payload.event === "charge.success") {
       const { reference } = payload.data;
       const payment = await this.paymentRepo.findOne({ where: { reference } });
       if (payment && payment.status !== PaymentStatus.SUCCESS) {
@@ -1155,7 +1246,11 @@ export class PaymentsService {
     await this.paymentRepo.save(payment);
 
     // Decrement tier stock
-    await this.tierRepo.decrement({ id: payment.ticketTierId }, 'soldQuantity', payment.quantity);
+    await this.tierRepo.decrement(
+      { id: payment.ticketTierId },
+      "soldQuantity",
+      payment.quantity,
+    );
 
     // Generate tickets
     const tickets: Ticket[] = [];
@@ -1168,7 +1263,10 @@ export class PaymentsService {
         paymentRef: payment.reference,
       });
 
-      const qrCodeUrl = await this.qrCodeService.generateAndUpload(qrData, ticketCode);
+      const qrCodeUrl = await this.qrCodeService.generateAndUpload(
+        qrData,
+        ticketCode,
+      );
 
       const ticket = this.ticketRepo.create({
         ticketCode,
@@ -1186,7 +1284,11 @@ export class PaymentsService {
     await this.ticketRepo.save(tickets);
 
     // Send notification + email
-    await this.notificationsService.sendTicketConfirmation(payment.userId, payment.eventId, tickets);
+    await this.notificationsService.sendTicketConfirmation(
+      payment.userId,
+      payment.eventId,
+      tickets,
+    );
 
     // Invalidate analytics cache
     await this.cacheService.del(`analytics:creator:${payment.eventId}`);
@@ -1200,17 +1302,23 @@ export class PaymentsService {
     if (cached) return cached;
 
     const qb = this.paymentRepo
-      .createQueryBuilder('payment')
-      .leftJoinAndSelect('payment.event', 'event')
-      .leftJoinAndSelect('payment.user', 'user')
-      .where('event.creatorId = :creatorId', { creatorId })
-      .andWhere('payment.status = :status', { status: PaymentStatus.SUCCESS })
-      .orderBy('payment.paidAt', 'DESC')
+      .createQueryBuilder("payment")
+      .leftJoinAndSelect("payment.event", "event")
+      .leftJoinAndSelect("payment.user", "user")
+      .where("event.creatorId = :creatorId", { creatorId })
+      .andWhere("payment.status = :status", { status: PaymentStatus.SUCCESS })
+      .orderBy("payment.paidAt", "DESC")
       .skip((pagination.page - 1) * pagination.limit)
       .take(pagination.limit);
 
     const [data, total] = await qb.getManyAndCount();
-    const result = { data, total, page: pagination.page, limit: pagination.limit, totalPages: Math.ceil(total / pagination.limit) };
+    const result = {
+      data,
+      total,
+      page: pagination.page,
+      limit: pagination.limit,
+      totalPages: Math.ceil(total / pagination.limit),
+    };
 
     await this.cacheService.set(cacheKey, result, 120);
     return result;
@@ -1220,36 +1328,42 @@ export class PaymentsService {
 
 ```typescript
 // src/modules/payments/payments.controller.ts
-@ApiTags('Payments')
-@Controller('payments')
+@ApiTags("Payments")
+@Controller("payments")
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Post('initialize')
+  @Post("initialize")
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Initialize Paystack payment for ticket purchase' })
+  @ApiOperation({ summary: "Initialize Paystack payment for ticket purchase" })
   initialize(@Body() dto: InitializePaymentDto, @CurrentUser() user: User) {
     return this.paymentsService.initializePayment(dto, user.id);
   }
 
-  @Get('verify/:reference')
+  @Get("verify/:reference")
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Verify payment after redirect from Paystack' })
-  verify(@Param('reference') reference: string) {
+  @ApiOperation({ summary: "Verify payment after redirect from Paystack" })
+  verify(@Param("reference") reference: string) {
     return this.paymentsService.verifyPayment(reference);
   }
 
-  @Post('webhook')
-  @ApiOperation({ summary: 'Paystack webhook endpoint' })
-  webhook(@Body() payload: any, @Headers('x-paystack-signature') signature: string) {
+  @Post("webhook")
+  @ApiOperation({ summary: "Paystack webhook endpoint" })
+  webhook(
+    @Body() payload: any,
+    @Headers("x-paystack-signature") signature: string,
+  ) {
     return this.paymentsService.handleWebhook(payload, signature);
   }
 
-  @Get('creator/all')
+  @Get("creator/all")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
-  @ApiOperation({ summary: 'Get all payments for creator events' })
-  getCreatorPayments(@CurrentUser() user: User, @Query() pagination: PaginationDto) {
+  @ApiOperation({ summary: "Get all payments for creator events" })
+  getCreatorPayments(
+    @CurrentUser() user: User,
+    @Query() pagination: PaginationDto,
+  ) {
     return this.paymentsService.getCreatorPayments(user.id, pagination);
   }
 }
@@ -1273,47 +1387,54 @@ export class QrCodeService {
   async generateAndUpload(data: string, ticketCode: string): Promise<string> {
     // Generate QR code as buffer
     const qrBuffer = await QRCode.toBuffer(data, {
-      errorCorrectionLevel: 'H',
+      errorCorrectionLevel: "H",
       width: 400,
       margin: 2,
-      color: { dark: '#000000', light: '#ffffff' },
+      color: { dark: "#000000", light: "#ffffff" },
     });
 
     // Upload to Cloudinary
     const result = await this.cloudinaryService.uploadBuffer(
       qrBuffer,
       `qrcodes/${ticketCode}`,
-      'image/png',
+      "image/png",
     );
 
     return result.secure_url;
   }
 
-  async validateQrCode(qrData: string, scannerId: string): Promise<QrValidationResult> {
+  async validateQrCode(
+    qrData: string,
+    scannerId: string,
+  ): Promise<QrValidationResult> {
     let parsed: { ticketCode: string; eventId: string; userId: string };
     try {
       parsed = JSON.parse(qrData);
     } catch {
-      return { valid: false, message: 'Invalid QR code format' };
+      return { valid: false, message: "Invalid QR code format" };
     }
 
     const cacheKey = `ticket:scanned:${parsed.ticketCode}`;
     const alreadyScanned = await this.cacheService.get(cacheKey);
     if (alreadyScanned) {
-      return { valid: false, message: 'Ticket already scanned' };
+      return { valid: false, message: "Ticket already scanned" };
     }
 
     const ticket = await this.ticketRepo.findOne({
       where: { ticketCode: parsed.ticketCode },
-      relations: ['user', 'event', 'ticketTier'],
+      relations: ["user", "event", "ticketTier"],
     });
 
-    if (!ticket) return { valid: false, message: 'Ticket not found' };
+    if (!ticket) return { valid: false, message: "Ticket not found" };
     if (ticket.status !== TicketStatus.ACTIVE) {
       return { valid: false, message: `Ticket is ${ticket.status}` };
     }
     if (ticket.scannedAt) {
-      return { valid: false, message: 'Ticket already used', scannedAt: ticket.scannedAt };
+      return {
+        valid: false,
+        message: "Ticket already used",
+        scannedAt: ticket.scannedAt,
+      };
     }
 
     // Mark as scanned
@@ -1327,7 +1448,7 @@ export class QrCodeService {
 
     return {
       valid: true,
-      message: 'Access granted',
+      message: "Access granted",
       ticket: {
         ticketCode: ticket.ticketCode,
         holderName: ticket.user.fullName,
@@ -1342,15 +1463,15 @@ export class QrCodeService {
 
 ```typescript
 // src/modules/qr-codes/qr-codes.controller.ts
-@ApiTags('QR Codes')
-@Controller('qr-codes')
+@ApiTags("QR Codes")
+@Controller("qr-codes")
 export class QrCodesController {
   constructor(private readonly qrCodeService: QrCodeService) {}
 
-  @Post('validate')
+  @Post("validate")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
-  @ApiOperation({ summary: 'Validate a scanned QR code at event entry' })
+  @ApiOperation({ summary: "Validate a scanned QR code at event entry" })
   validate(@Body() dto: ValidateQrDto, @CurrentUser() user: User) {
     return this.qrCodeService.validateQrCode(dto.qrData, user.id);
   }
@@ -1377,9 +1498,15 @@ export class NotificationsService {
   ) {}
 
   // Called when a creator sets default reminders for all attendees
-  async setCreatorReminders(eventId: string, creatorId: string, offsetHours: number[]) {
-    const event = await this.eventRepo.findOne({ where: { id: eventId, creatorId } });
-    if (!event) throw new NotFoundException('Event not found');
+  async setCreatorReminders(
+    eventId: string,
+    creatorId: string,
+    offsetHours: number[],
+  ) {
+    const event = await this.eventRepo.findOne({
+      where: { id: eventId, creatorId },
+    });
+    if (!event) throw new NotFoundException("Event not found");
 
     event.defaultReminderOffsets = offsetHours;
     await this.eventRepo.save(event);
@@ -1387,20 +1514,31 @@ export class NotificationsService {
   }
 
   // Called when an eventee sets their own reminder for an event
-  async setEventeeReminder(userId: string, eventId: string, offsetHours: number[]) {
+  async setEventeeReminder(
+    userId: string,
+    eventId: string,
+    offsetHours: number[],
+  ) {
     // Delete existing user reminders for this event
     await this.reminderRepo.delete({ userId, eventId });
 
     const event = await this.eventRepo.findOne({ where: { id: eventId } });
-    if (!event) throw new NotFoundException('Event not found');
+    if (!event) throw new NotFoundException("Event not found");
 
     const reminders = offsetHours.map((hours) => {
-      const scheduledFor = new Date(event.startDate.getTime() - hours * 60 * 60 * 1000);
-      return this.reminderRepo.create({ userId, eventId, offsetHours: hours, scheduledFor });
+      const scheduledFor = new Date(
+        event.startDate.getTime() - hours * 60 * 60 * 1000,
+      );
+      return this.reminderRepo.create({
+        userId,
+        eventId,
+        offsetHours: hours,
+        scheduledFor,
+      });
     });
 
     await this.reminderRepo.save(reminders);
-    return { message: 'Reminders set', reminders };
+    return { message: "Reminders set", reminders };
   }
 
   // Called after ticket purchase - seed default creator reminders for this user
@@ -1408,28 +1546,41 @@ export class NotificationsService {
     const event = await this.eventRepo.findOne({ where: { id: eventId } });
     if (!event?.defaultReminderOffsets?.length) return;
 
-    const existing = await this.reminderRepo.findOne({ where: { userId, eventId } });
+    const existing = await this.reminderRepo.findOne({
+      where: { userId, eventId },
+    });
     if (existing) return; // User already has custom reminders
 
     const reminders = event.defaultReminderOffsets.map((hours) => {
-      const scheduledFor = new Date(event.startDate.getTime() - hours * 60 * 60 * 1000);
-      return this.reminderRepo.create({ userId, eventId, offsetHours: hours, scheduledFor });
+      const scheduledFor = new Date(
+        event.startDate.getTime() - hours * 60 * 60 * 1000,
+      );
+      return this.reminderRepo.create({
+        userId,
+        eventId,
+        offsetHours: hours,
+        scheduledFor,
+      });
     });
 
     await this.reminderRepo.save(reminders);
   }
 
-  async sendTicketConfirmation(userId: string, eventId: string, tickets: Ticket[]) {
+  async sendTicketConfirmation(
+    userId: string,
+    eventId: string,
+    tickets: Ticket[],
+  ) {
     const event = await this.eventRepo.findOne({ where: { id: eventId } });
 
     // In-app notification
     await this.notificationRepo.save(
       this.notificationRepo.create({
         userId,
-        title: 'Ticket Purchase Confirmed! 🎉',
+        title: "Ticket Purchase Confirmed! 🎉",
         message: `Your ${tickets.length} ticket(s) for "${event.title}" are confirmed.`,
         eventId,
-        type: 'ticket_purchased',
+        type: "ticket_purchased",
       }),
     );
 
@@ -1440,7 +1591,11 @@ export class NotificationsService {
     this.sendTicketEmail(userId, event, tickets).catch(console.error);
   }
 
-  private async sendTicketEmail(userId: string, event: Event, tickets: Ticket[]) {
+  private async sendTicketEmail(
+    userId: string,
+    event: Event,
+    tickets: Ticket[],
+  ) {
     // Fetch user email
     // Build HTML email with QR code images
     // Send via nodemailer/Resend
@@ -1453,12 +1608,16 @@ export class NotificationsService {
 
     const [data, total] = await this.notificationRepo.findAndCount({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
       skip: (pagination.page - 1) * pagination.limit,
       take: pagination.limit,
     });
 
-    const result = { data, total, unreadCount: data.filter((n) => !n.isRead).length };
+    const result = {
+      data,
+      total,
+      unreadCount: data.filter((n) => !n.isRead).length,
+    };
     await this.cacheService.set(cacheKey, result, 30);
     return result;
   }
@@ -1481,11 +1640,14 @@ export class NotificationsService {
     const upcoming = new Date(now.getTime() + 60 * 1000); // next 1 minute window
 
     const dueReminders = await this.reminderRepo
-      .createQueryBuilder('reminder')
-      .leftJoinAndSelect('reminder.event', 'event')
-      .leftJoinAndSelect('reminder.user', 'user')
-      .where('reminder.isSent = false')
-      .andWhere('reminder.scheduledFor BETWEEN :now AND :upcoming', { now, upcoming })
+      .createQueryBuilder("reminder")
+      .leftJoinAndSelect("reminder.event", "event")
+      .leftJoinAndSelect("reminder.user", "user")
+      .where("reminder.isSent = false")
+      .andWhere("reminder.scheduledFor BETWEEN :now AND :upcoming", {
+        now,
+        upcoming,
+      })
       .getMany();
 
     for (const reminder of dueReminders) {
@@ -1501,9 +1663,9 @@ export class NotificationsService {
       this.notificationRepo.create({
         userId: reminder.userId,
         title: `Upcoming Event Reminder 🔔`,
-        message: `"${reminder.event.title}" starts in ${reminder.offsetHours < 24 ? reminder.offsetHours + ' hour(s)' : Math.round(reminder.offsetHours / 24) + ' day(s)'}!`,
+        message: `"${reminder.event.title}" starts in ${reminder.offsetHours < 24 ? reminder.offsetHours + " hour(s)" : Math.round(reminder.offsetHours / 24) + " day(s)"}!`,
         eventId: reminder.eventId,
-        type: 'reminder',
+        type: "reminder",
       }),
     );
     // Also send email reminder
@@ -1513,48 +1675,64 @@ export class NotificationsService {
 
 ```typescript
 // src/modules/notifications/notifications.controller.ts
-@ApiTags('Notifications')
-@Controller('notifications')
+@ApiTags("Notifications")
+@Controller("notifications")
 @UseGuards(JwtAuthGuard)
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get current user notifications' })
-  getNotifications(@CurrentUser() user: User, @Query() pagination: PaginationDto) {
+  @ApiOperation({ summary: "Get current user notifications" })
+  getNotifications(
+    @CurrentUser() user: User,
+    @Query() pagination: PaginationDto,
+  ) {
     return this.notificationsService.getUserNotifications(user.id, pagination);
   }
 
-  @Patch(':id/read')
-  markAsRead(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+  @Patch(":id/read")
+  markAsRead(
+    @Param("id", ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
     return this.notificationsService.markAsRead(id, user.id);
   }
 
-  @Patch('mark-all-read')
+  @Patch("mark-all-read")
   markAllRead(@CurrentUser() user: User) {
     return this.notificationsService.markAllRead(user.id);
   }
 
-  @Post('events/:eventId/reminders')
-  @ApiOperation({ summary: 'Set custom reminders for an event (eventee)' })
+  @Post("events/:eventId/reminders")
+  @ApiOperation({ summary: "Set custom reminders for an event (eventee)" })
   setReminder(
-    @Param('eventId', ParseUUIDPipe) eventId: string,
+    @Param("eventId", ParseUUIDPipe) eventId: string,
     @Body() dto: SetReminderDto,
     @CurrentUser() user: User,
   ) {
-    return this.notificationsService.setEventeeReminder(user.id, eventId, dto.offsetHours);
+    return this.notificationsService.setEventeeReminder(
+      user.id,
+      eventId,
+      dto.offsetHours,
+    );
   }
 
-  @Post('events/:eventId/creator-reminders')
+  @Post("events/:eventId/creator-reminders")
   @UseGuards(RolesGuard)
   @Roles(UserRole.CREATOR)
-  @ApiOperation({ summary: 'Set default reminders for all attendees (creator only)' })
+  @ApiOperation({
+    summary: "Set default reminders for all attendees (creator only)",
+  })
   setCreatorReminders(
-    @Param('eventId', ParseUUIDPipe) eventId: string,
+    @Param("eventId", ParseUUIDPipe) eventId: string,
     @Body() dto: SetReminderDto,
     @CurrentUser() user: User,
   ) {
-    return this.notificationsService.setCreatorReminders(eventId, user.id, dto.offsetHours);
+    return this.notificationsService.setCreatorReminders(
+      eventId,
+      user.id,
+      dto.offsetHours,
+    );
   }
 }
 ```
@@ -1568,7 +1746,8 @@ export class NotificationsController {
 @Injectable()
 export class AnalyticsService {
   constructor(
-    @InjectRepository(Payment) private readonly paymentRepo: Repository<Payment>,
+    @InjectRepository(Payment)
+    private readonly paymentRepo: Repository<Payment>,
     @InjectRepository(Ticket) private readonly ticketRepo: Repository<Ticket>,
     @InjectRepository(Event) private readonly eventRepo: Repository<Event>,
     private readonly cacheService: CacheService,
@@ -1579,38 +1758,44 @@ export class AnalyticsService {
     const cached = await this.cacheService.get(cacheKey);
     if (cached) return cached;
 
-    const [totalEvents, totalRevenue, totalTicketsSold, totalScanned] = await Promise.all([
-      this.eventRepo.count({ where: { creatorId } }),
+    const [totalEvents, totalRevenue, totalTicketsSold, totalScanned] =
+      await Promise.all([
+        this.eventRepo.count({ where: { creatorId } }),
 
-      this.paymentRepo
-        .createQueryBuilder('payment')
-        .leftJoin('payment.event', 'event')
-        .where('event.creatorId = :creatorId', { creatorId })
-        .andWhere('payment.status = :status', { status: PaymentStatus.SUCCESS })
-        .select('SUM(payment.amount)', 'total')
-        .getRawOne()
-        .then((r) => parseFloat(r?.total || '0')),
+        this.paymentRepo
+          .createQueryBuilder("payment")
+          .leftJoin("payment.event", "event")
+          .where("event.creatorId = :creatorId", { creatorId })
+          .andWhere("payment.status = :status", {
+            status: PaymentStatus.SUCCESS,
+          })
+          .select("SUM(payment.amount)", "total")
+          .getRawOne()
+          .then((r) => parseFloat(r?.total || "0")),
 
-      this.ticketRepo
-        .createQueryBuilder('ticket')
-        .leftJoin('ticket.event', 'event')
-        .where('event.creatorId = :creatorId', { creatorId })
-        .getCount(),
+        this.ticketRepo
+          .createQueryBuilder("ticket")
+          .leftJoin("ticket.event", "event")
+          .where("event.creatorId = :creatorId", { creatorId })
+          .getCount(),
 
-      this.ticketRepo
-        .createQueryBuilder('ticket')
-        .leftJoin('ticket.event', 'event')
-        .where('event.creatorId = :creatorId', { creatorId })
-        .andWhere('ticket.scannedAt IS NOT NULL')
-        .getCount(),
-    ]);
+        this.ticketRepo
+          .createQueryBuilder("ticket")
+          .leftJoin("ticket.event", "event")
+          .where("event.creatorId = :creatorId", { creatorId })
+          .andWhere("ticket.scannedAt IS NOT NULL")
+          .getCount(),
+      ]);
 
     const result = {
       totalEvents,
       totalRevenue,
       totalTicketsSold,
       totalScanned,
-      scanRate: totalTicketsSold > 0 ? ((totalScanned / totalTicketsSold) * 100).toFixed(2) + '%' : '0%',
+      scanRate:
+        totalTicketsSold > 0
+          ? ((totalScanned / totalTicketsSold) * 100).toFixed(2) + "%"
+          : "0%",
     };
 
     await this.cacheService.set(cacheKey, result, 300);
@@ -1622,32 +1807,43 @@ export class AnalyticsService {
     const cached = await this.cacheService.get(cacheKey);
     if (cached) return cached;
 
-    const event = await this.eventRepo.findOne({ where: { id: eventId, creatorId }, relations: ['ticketTiers'] });
-    if (!event) throw new NotFoundException('Event not found or unauthorized');
+    const event = await this.eventRepo.findOne({
+      where: { id: eventId, creatorId },
+      relations: ["ticketTiers"],
+    });
+    if (!event) throw new NotFoundException("Event not found or unauthorized");
 
-    const [ticketsSold, scannedCount, revenue, ticketsByTier] = await Promise.all([
-      this.ticketRepo.count({ where: { eventId } }),
+    const [ticketsSold, scannedCount, revenue, ticketsByTier] =
+      await Promise.all([
+        this.ticketRepo.count({ where: { eventId } }),
 
-      this.ticketRepo.count({ where: { eventId, status: TicketStatus.USED } }),
+        this.ticketRepo.count({
+          where: { eventId, status: TicketStatus.USED },
+        }),
 
-      this.paymentRepo
-        .createQueryBuilder('payment')
-        .where('payment.eventId = :eventId', { eventId })
-        .andWhere('payment.status = :status', { status: PaymentStatus.SUCCESS })
-        .select('SUM(payment.amount)', 'total')
-        .getRawOne()
-        .then((r) => parseFloat(r?.total || '0')),
+        this.paymentRepo
+          .createQueryBuilder("payment")
+          .where("payment.eventId = :eventId", { eventId })
+          .andWhere("payment.status = :status", {
+            status: PaymentStatus.SUCCESS,
+          })
+          .select("SUM(payment.amount)", "total")
+          .getRawOne()
+          .then((r) => parseFloat(r?.total || "0")),
 
-      this.ticketRepo
-        .createQueryBuilder('ticket')
-        .where('ticket.eventId = :eventId', { eventId })
-        .leftJoin('ticket.ticketTier', 'tier')
-        .groupBy('tier.name')
-        .select(['tier.name AS tierName', 'COUNT(ticket.id) AS count'])
-        .getRawMany(),
-    ]);
+        this.ticketRepo
+          .createQueryBuilder("ticket")
+          .where("ticket.eventId = :eventId", { eventId })
+          .leftJoin("ticket.ticketTier", "tier")
+          .groupBy("tier.name")
+          .select(["tier.name AS tierName", "COUNT(ticket.id) AS count"])
+          .getRawMany(),
+      ]);
 
-    const capacity = event.ticketTiers.reduce((sum, t) => sum + t.totalQuantity, 0);
+    const capacity = event.ticketTiers.reduce(
+      (sum, t) => sum + t.totalQuantity,
+      0,
+    );
 
     const result = {
       eventId,
@@ -1657,29 +1853,43 @@ export class AnalyticsService {
       scannedCount,
       revenue,
       ticketsByTier,
-      soldPercentage: capacity > 0 ? ((ticketsSold / capacity) * 100).toFixed(2) : '0',
-      scanPercentage: ticketsSold > 0 ? ((scannedCount / ticketsSold) * 100).toFixed(2) : '0',
+      soldPercentage:
+        capacity > 0 ? ((ticketsSold / capacity) * 100).toFixed(2) : "0",
+      scanPercentage:
+        ticketsSold > 0 ? ((scannedCount / ticketsSold) * 100).toFixed(2) : "0",
     };
 
     await this.cacheService.set(cacheKey, result, 120);
     return result;
   }
 
-  async getRevenueOverTime(creatorId: string, period: 'daily' | 'weekly' | 'monthly') {
+  async getRevenueOverTime(
+    creatorId: string,
+    period: "daily" | "weekly" | "monthly",
+  ) {
     const cacheKey = `analytics:revenue:${creatorId}:${period}`;
     const cached = await this.cacheService.get(cacheKey);
     if (cached) return cached;
 
-    const format = period === 'daily' ? 'YYYY-MM-DD' : period === 'weekly' ? 'IYYY-IW' : 'YYYY-MM';
+    const format =
+      period === "daily"
+        ? "YYYY-MM-DD"
+        : period === "weekly"
+          ? "IYYY-IW"
+          : "YYYY-MM";
 
     const data = await this.paymentRepo
-      .createQueryBuilder('payment')
-      .leftJoin('payment.event', 'event')
-      .where('event.creatorId = :creatorId', { creatorId })
-      .andWhere('payment.status = :status', { status: PaymentStatus.SUCCESS })
+      .createQueryBuilder("payment")
+      .leftJoin("payment.event", "event")
+      .where("event.creatorId = :creatorId", { creatorId })
+      .andWhere("payment.status = :status", { status: PaymentStatus.SUCCESS })
       .groupBy(`TO_CHAR(payment.paidAt, '${format}')`)
-      .select([`TO_CHAR(payment.paidAt, '${format}') AS period`, 'SUM(payment.amount) AS revenue', 'COUNT(*) AS transactions'])
-      .orderBy('period', 'ASC')
+      .select([
+        `TO_CHAR(payment.paidAt, '${format}') AS period`,
+        "SUM(payment.amount) AS revenue",
+        "COUNT(*) AS transactions",
+      ])
+      .orderBy("period", "ASC")
       .getRawMany();
 
     await this.cacheService.set(cacheKey, data, 600);
@@ -1690,28 +1900,34 @@ export class AnalyticsService {
 
 ```typescript
 // src/modules/analytics/analytics.controller.ts
-@ApiTags('Analytics')
-@Controller('analytics')
+@ApiTags("Analytics")
+@Controller("analytics")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.CREATOR)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
-  @Get('overview')
-  @ApiOperation({ summary: 'Get creator overall analytics (all events)' })
+  @Get("overview")
+  @ApiOperation({ summary: "Get creator overall analytics (all events)" })
   getOverview(@CurrentUser() user: User) {
     return this.analyticsService.getCreatorOverallAnalytics(user.id);
   }
 
-  @Get('events/:eventId')
-  @ApiOperation({ summary: 'Get analytics for a specific event' })
-  getEventAnalytics(@Param('eventId', ParseUUIDPipe) eventId: string, @CurrentUser() user: User) {
+  @Get("events/:eventId")
+  @ApiOperation({ summary: "Get analytics for a specific event" })
+  getEventAnalytics(
+    @Param("eventId", ParseUUIDPipe) eventId: string,
+    @CurrentUser() user: User,
+  ) {
     return this.analyticsService.getEventAnalytics(eventId, user.id);
   }
 
-  @Get('revenue')
-  @ApiOperation({ summary: 'Get revenue over time (daily/weekly/monthly)' })
-  getRevenue(@CurrentUser() user: User, @Query('period') period: 'daily' | 'weekly' | 'monthly' = 'monthly') {
+  @Get("revenue")
+  @ApiOperation({ summary: "Get revenue over time (daily/weekly/monthly)" })
+  getRevenue(
+    @CurrentUser() user: User,
+    @Query("period") period: "daily" | "weekly" | "monthly" = "monthly",
+  ) {
     return this.analyticsService.getRevenueOverTime(user.id, period);
   }
 }
@@ -1723,21 +1939,21 @@ export class AnalyticsController {
 
 ```typescript
 // src/modules/tickets/tickets.controller.ts
-@ApiTags('Tickets')
-@Controller('tickets')
+@ApiTags("Tickets")
+@Controller("tickets")
 @UseGuards(JwtAuthGuard)
 export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
 
-  @Get('my-tickets')
-  @ApiOperation({ summary: 'Get all tickets for the current eventee' })
+  @Get("my-tickets")
+  @ApiOperation({ summary: "Get all tickets for the current eventee" })
   getMyTickets(@CurrentUser() user: User, @Query() pagination: PaginationDto) {
     return this.ticketsService.getUserTickets(user.id, pagination);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get ticket details with QR code' })
-  getTicket(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+  @Get(":id")
+  @ApiOperation({ summary: "Get ticket details with QR code" })
+  getTicket(@Param("id", ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.ticketsService.getTicketById(id, user.id);
   }
 }
@@ -1751,7 +1967,7 @@ export class TicketsController {
 // src/modules/cache/cache.service.ts
 @Injectable()
 export class CacheService {
-  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {}
+  constructor(@Inject("REDIS_CLIENT") private readonly redis: Redis) {}
 
   async get<T>(key: string): Promise<T | null> {
     const value = await this.redis.get(key);
@@ -1764,7 +1980,7 @@ export class CacheService {
   }
 
   async set(key: string, value: any, ttlSeconds = 300): Promise<void> {
-    await this.redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+    await this.redis.set(key, JSON.stringify(value), "EX", ttlSeconds);
   }
 
   async del(key: string): Promise<void> {
@@ -1798,12 +2014,12 @@ export class CacheService {
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        url: config.get('DATABASE_URL'),
+        type: "postgres",
+        url: config.get("DATABASE_URL"),
         ssl: { rejectUnauthorized: false },
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: config.get('NODE_ENV') !== 'production',
-        migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
+        entities: [__dirname + "/**/*.entity{.ts,.js}"],
+        synchronize: config.get("NODE_ENV") !== "production",
+        migrations: [__dirname + "/database/migrations/*{.ts,.js}"],
       }),
       inject: [ConfigService],
     }),
@@ -1833,27 +2049,27 @@ export class AppModule {}
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix("api/v1");
   app.enableCors({ origin: process.env.FRONTEND_URL, credentials: true });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   // Swagger
   const config = new DocumentBuilder()
-    .setTitle('Eventful API')
-    .setDescription('Eventful Ticketing Platform API')
-    .setVersion('1.0')
+    .setTitle("Eventful API")
+    .setDescription("Eventful Ticketing Platform API")
+    .setVersion("1.0")
     .addBearerAuth()
-    .addTag('Auth')
-    .addTag('Events')
-    .addTag('Tickets')
-    .addTag('Payments')
-    .addTag('QR Codes')
-    .addTag('Notifications')
-    .addTag('Analytics')
+    .addTag("Auth")
+    .addTag("Events")
+    .addTag("Tickets")
+    .addTag("Payments")
+    .addTag("QR Codes")
+    .addTag("Notifications")
+    .addTag("Analytics")
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup("api/docs", app, document);
 
   await app.listen(process.env.PORT || 3000);
   console.log(`🚀 Eventful API running on port ${process.env.PORT || 3000}`);
@@ -1868,7 +2084,7 @@ bootstrap();
 
 ```typescript
 // src/modules/auth/tests/auth.service.spec.ts (Unit Test)
-describe('AuthService', () => {
+describe("AuthService", () => {
   let service: AuthService;
   let usersService: jest.Mocked<UsersService>;
 
@@ -1876,8 +2092,14 @@ describe('AuthService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        { provide: UsersService, useValue: { findByEmail: jest.fn(), create: jest.fn() } },
-        { provide: JwtService, useValue: { signAsync: jest.fn().mockResolvedValue('token') } },
+        {
+          provide: UsersService,
+          useValue: { findByEmail: jest.fn(), create: jest.fn() },
+        },
+        {
+          provide: JwtService,
+          useValue: { signAsync: jest.fn().mockResolvedValue("token") },
+        },
         { provide: CacheService, useValue: { set: jest.fn(), del: jest.fn() } },
         { provide: ConfigService, useValue: { get: jest.fn() } },
       ],
@@ -1887,23 +2109,32 @@ describe('AuthService', () => {
     usersService = module.get(UsersService);
   });
 
-  describe('register', () => {
-    it('should throw ConflictException if email exists', async () => {
-      usersService.findByEmail.mockResolvedValue({ id: '1' } as any);
-      await expect(service.register({ email: 'test@test.com' } as any)).rejects.toThrow(ConflictException);
+  describe("register", () => {
+    it("should throw ConflictException if email exists", async () => {
+      usersService.findByEmail.mockResolvedValue({ id: "1" } as any);
+      await expect(
+        service.register({ email: "test@test.com" } as any),
+      ).rejects.toThrow(ConflictException);
     });
 
-    it('should create and return user with tokens on success', async () => {
+    it("should create and return user with tokens on success", async () => {
       usersService.findByEmail.mockResolvedValue(null);
-      usersService.create.mockResolvedValue({ id: '1', email: 'test@test.com', role: UserRole.EVENTEE } as any);
-      const result = await service.register({ email: 'test@test.com', password: 'pass' } as any);
-      expect(result).toHaveProperty('accessToken');
+      usersService.create.mockResolvedValue({
+        id: "1",
+        email: "test@test.com",
+        role: UserRole.EVENTEE,
+      } as any);
+      const result = await service.register({
+        email: "test@test.com",
+        password: "pass",
+      } as any);
+      expect(result).toHaveProperty("accessToken");
     });
   });
 });
 
 // src/modules/payments/tests/payments.integration.spec.ts (Integration Test)
-describe('PaymentsModule (Integration)', () => {
+describe("PaymentsModule (Integration)", () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -1914,9 +2145,9 @@ describe('PaymentsModule (Integration)', () => {
     await app.init();
   });
 
-  it('POST /api/v1/payments/initialize - should require auth', () => {
+  it("POST /api/v1/payments/initialize - should require auth", () => {
     return request(app.getHttpServer())
-      .post('/api/v1/payments/initialize')
+      .post("/api/v1/payments/initialize")
       .expect(401);
   });
 
@@ -1928,36 +2159,36 @@ describe('PaymentsModule (Integration)', () => {
 
 ## API Endpoints Summary
 
-| Method | Endpoint | Auth | Role | Description |
-|--------|----------|------|------|-------------|
-| POST | /api/v1/auth/register | — | Any | Register |
-| POST | /api/v1/auth/login | — | Any | Login |
-| POST | /api/v1/auth/logout | JWT | Any | Logout |
-| POST | /api/v1/auth/refresh | JWT | Any | Refresh tokens |
-| GET | /api/v1/auth/me | JWT | Any | Get current user |
-| POST | /api/v1/events | JWT | Creator | Create event |
-| GET | /api/v1/events | — | — | List public events |
-| GET | /api/v1/events/my-events | JWT | Creator | Creator's events |
-| GET | /api/v1/events/:id | — | — | Get event |
-| GET | /api/v1/events/slug/:slug | — | — | Get by slug |
-| PATCH | /api/v1/events/:id | JWT | Creator | Update event |
-| POST | /api/v1/events/:id/publish | JWT | Creator | Publish event |
-| GET | /api/v1/events/:id/attendees | JWT | Creator | Get attendees |
-| GET | /api/v1/events/:id/share | — | — | Get share links |
-| POST | /api/v1/payments/initialize | JWT | Eventee | Start payment |
-| GET | /api/v1/payments/verify/:ref | JWT | Eventee | Verify payment |
-| POST | /api/v1/payments/webhook | — | System | Paystack webhook |
-| GET | /api/v1/payments/creator/all | JWT | Creator | Creator payments |
-| GET | /api/v1/tickets/my-tickets | JWT | Eventee | User's tickets |
-| GET | /api/v1/tickets/:id | JWT | Eventee | Ticket + QR code |
-| POST | /api/v1/qr-codes/validate | JWT | Creator | Scan/validate QR |
-| GET | /api/v1/notifications | JWT | Any | Get notifications |
-| PATCH | /api/v1/notifications/:id/read | JWT | Any | Mark as read |
-| POST | /api/v1/notifications/events/:id/reminders | JWT | Eventee | Set own reminder |
-| POST | /api/v1/notifications/events/:id/creator-reminders | JWT | Creator | Set default reminders |
-| GET | /api/v1/analytics/overview | JWT | Creator | Overall analytics |
-| GET | /api/v1/analytics/events/:id | JWT | Creator | Event analytics |
-| GET | /api/v1/analytics/revenue | JWT | Creator | Revenue chart data |
+| Method | Endpoint                                           | Auth | Role    | Description           |
+| ------ | -------------------------------------------------- | ---- | ------- | --------------------- |
+| POST   | /api/v1/auth/register                              | —    | Any     | Register              |
+| POST   | /api/v1/auth/login                                 | —    | Any     | Login                 |
+| POST   | /api/v1/auth/logout                                | JWT  | Any     | Logout                |
+| POST   | /api/v1/auth/refresh                               | JWT  | Any     | Refresh tokens        |
+| GET    | /api/v1/auth/me                                    | JWT  | Any     | Get current user      |
+| POST   | /api/v1/events                                     | JWT  | Creator | Create event          |
+| GET    | /api/v1/events                                     | —    | —       | List public events    |
+| GET    | /api/v1/events/my-events                           | JWT  | Creator | Creator's events      |
+| GET    | /api/v1/events/:id                                 | —    | —       | Get event             |
+| GET    | /api/v1/events/slug/:slug                          | —    | —       | Get by slug           |
+| PATCH  | /api/v1/events/:id                                 | JWT  | Creator | Update event          |
+| POST   | /api/v1/events/:id/publish                         | JWT  | Creator | Publish event         |
+| GET    | /api/v1/events/:id/attendees                       | JWT  | Creator | Get attendees         |
+| GET    | /api/v1/events/:id/share                           | —    | —       | Get share links       |
+| POST   | /api/v1/payments/initialize                        | JWT  | Eventee | Start payment         |
+| GET    | /api/v1/payments/verify/:ref                       | JWT  | Eventee | Verify payment        |
+| POST   | /api/v1/payments/webhook                           | —    | System  | Paystack webhook      |
+| GET    | /api/v1/payments/creator/all                       | JWT  | Creator | Creator payments      |
+| GET    | /api/v1/tickets/my-tickets                         | JWT  | Eventee | User's tickets        |
+| GET    | /api/v1/tickets/:id                                | JWT  | Eventee | Ticket + QR code      |
+| POST   | /api/v1/qr-codes/validate                          | JWT  | Creator | Scan/validate QR      |
+| GET    | /api/v1/notifications                              | JWT  | Any     | Get notifications     |
+| PATCH  | /api/v1/notifications/:id/read                     | JWT  | Any     | Mark as read          |
+| POST   | /api/v1/notifications/events/:id/reminders         | JWT  | Eventee | Set own reminder      |
+| POST   | /api/v1/notifications/events/:id/creator-reminders | JWT  | Creator | Set default reminders |
+| GET    | /api/v1/analytics/overview                         | JWT  | Creator | Overall analytics     |
+| GET    | /api/v1/analytics/events/:id                       | JWT  | Creator | Event analytics       |
+| GET    | /api/v1/analytics/revenue                          | JWT  | Creator | Revenue chart data    |
 
 ---
 

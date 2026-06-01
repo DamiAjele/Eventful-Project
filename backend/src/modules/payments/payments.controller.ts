@@ -1,4 +1,5 @@
 import { Body, Controller, Headers, Post, Req } from '@nestjs/common';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { PaymentsService } from './payments.service';
 
 @Controller('payments')
@@ -6,6 +7,7 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Post('initialize')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async initialize(
     @Body() body: { tierId: string; qty: number; email: string },
   ) {
@@ -22,6 +24,7 @@ export class PaymentsController {
   }
 
   @Post('webhook')
+  @SkipThrottle()
   async webhook(
     @Req() req: any,
     @Headers('x-paystack-signature') signature: string,

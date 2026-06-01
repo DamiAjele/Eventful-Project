@@ -1,9 +1,10 @@
 import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LoginDto } from '../users/dto/login.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -13,13 +14,20 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async register(@Body() dto: CreateUserDto) {
-    const user = await this.usersService.create(dto.email, dto.password);
+    const user = await this.usersService.create(
+      dto.email,
+      dto.password,
+      dto.firstName,
+      dto.lastName,
+    );
     const tokens = await this.authService.generateTokens(user);
     return { user: { id: user.id, email: user.email }, tokens };
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async login(@Body() dto: LoginDto) {
     const user = await this.authService.validateUser(dto.email, dto.password);
     if (!user) throw new Error('Invalid credentials');

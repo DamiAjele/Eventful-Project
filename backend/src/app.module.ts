@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CacheModule } from './modules/cache/cache.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { UsersModule } from './modules/users/users.module';
@@ -33,6 +36,17 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
       inject: [ConfigService],
     }),
     CacheModule,
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          // Safely parses and fallbacks using ConfigService
+          ttl: (config.get<number>('THROTTLE_TTL') || 60) * 1000,
+          limit: config.get<number>('THROTTLE_LIMIT') || 100,
+        },
+      ],
+    }),
     ScheduleModule.forRoot(),
     // Auth and Users
     UsersModule,
@@ -48,6 +62,10 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     NotificationsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_FILTER, useClass: HttpExceptionFilter },
+  ],
 })
 export class AppModule {}

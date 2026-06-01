@@ -1,55 +1,116 @@
 import { Repository } from 'typeorm';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { EventsService } from '../events.service'; // Ensure this path is correct
+import { NotFoundException } from '@nestjs/common';
+import { EventsService } from '../events.service';
+import { Event } from '../entities/event.entity';
+import { TicketTier } from '../entities/ticket-tier.entity';
 
 describe('EventsService', () => {
-  // 1. Declare the mock variables at the top scope
-  let eventsRepoMock: jest.Mocked<Partial<Repository<any>>>;
-  let tiersRepoMock: jest.Mocked<Partial<Repository<any>>>;
   let service: EventsService;
+  let eventsRepoMock: jest.Mocked<Partial<Repository<Event>>>;
+  let tiersRepoMock: jest.Mocked<Partial<Repository<TicketTier>>>;
 
   beforeEach(() => {
-    // 2. Re-initialize the mock objects before EVERY test to prevent state leakage
+    // 1. Build a structurally valid mock representing our entities
     eventsRepoMock = {
-      create: jest.fn().mockImplementation((x) => x),
-      save: jest.fn().mockResolvedValue({ id: 'e1' }),
-      findOne: jest.fn().mockResolvedValue({ id: 'e1' }),
-      findOneBy: jest.fn().mockResolvedValue({ id: 'e1' }),
+      // Cast jest.fn() to match the specific signature TypeORM expects
+      create: jest
+        .fn<Repository<Event>['create']>()
+        .mockImplementation((dto: any) => dto as Event),
+
+      save: jest
+        .fn()
+        .mockImplementation((entity) =>
+          Promise.resolve({ id: 'e1', ...entity } as Event),
+        ),
+      findOne: jest.fn(),
+      findOneBy: jest.fn(),
     };
 
     tiersRepoMock = {
-      create: jest.fn().mockImplementation((x) => x),
-      save: jest.fn().mockResolvedValue({ id: 't1' }),
+      create: jest.fn().mockImplementation((dto) => dto as TicketTier),
+      save: jest
+        .fn()
+        .mockImplementation((entity) =>
+          Promise.resolve({ id: 't1', ...entity } as TicketTier),
+        ),
     };
 
-    // 3. Clear call histories just to be safe
     jest.clearAllMocks();
 
-    // 4. Instantiate your service with the fresh mocks
     service = new EventsService(
-      eventsRepoMock as Repository<any>,
-      tiersRepoMock as Repository<any>,
+      eventsRepoMock as Repository<Event>,
+      tiersRepoMock as Repository<TicketTier>,
     );
   });
 
-  it('creates event and adds tier', async () => {
-    // Act
-    const ev = await service.createEvent({ title: 'E' } as any);
+  describe('createEvent', () => {
+    it('should successfully create and save an event', async () => {
+      const eventData = { title: 'Tech Conference 2026' };
 
-    // Assert Event
-    expect(ev).toHaveProperty('id', 'e1');
-    expect(eventsRepoMock.create).toHaveBeenCalledWith({ title: 'E' });
-    expect(eventsRepoMock.save).toHaveBeenCalled();
+      const result = await service.createEvent(eventData);
 
-    // Act
-    const tier = await service.addTier('e1', {
-      name: 'General',
-      quantity: 10,
-    } as any);
+      expect(result).toHaveProperty('id', 'e1');
+      expect(result.title).toBe(eventData.title);
+      expect(eventsRepoMock.create).toHaveBeenCalledWith(eventData);
+      expect(eventsRepoMock.save).toHaveBeenCalledTimes(1);
+    });
+  });
 
-    // Assert Tier
-    expect(tier).toHaveProperty('id', 't1');
-    expect(tiersRepoMock.create).toHaveBeenCalled();
-    expect(tiersRepoMock.save).toHaveBeenCalled();
+  describe('addTier', () => {
+    it('should successfully add a ticket tier to an existing event', async () => {
+      const mockEvent = { id: 'e1', title: 'Tech Conference 2026' } as Event;
+      eventsRepoMock.findOneBy!.mockResolvedValue(mockEvent);
+
+      const tierData = { name: 'VIP', quantity: 50 };
+
+      const result = await service.addTier('e1', tierData);
+
+      expect(result).toHaveProperty('id', 't1');
+      expect(result.remainingQuantity).toBe(50);
+      expect(eventsRepoMock.findOneBy).toHaveBeenCalledWith({ id: 'e1' });
+      expect(tiersRepoMock.create).toHaveBeenCalledWith({
+        ...tierData,
+        event: mockEvent,
+        remainingQuantity: 50,
+      });
+      expect(tiersRepoMock.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw a NotFoundException if the target event does not exist', async () => {
+      eventsRepoMock.findOneBy!.mockResolvedValue(null); // Event missing in DB
+
+      const action = service.addTier('invalid-id', {
+        name: 'General',
+        quantity: 100,
+      });
+
+      await expect(action).rejects.toThrow(NotFoundException);
+      expect(tiersRepoMock.create).not.toHaveBeenCalled();
+      expect(tiersRepoMock.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findEventById', () => {
+    it('should return an event along with its relations if found', async () => {
+      const mockEvent = { id: 'e1', title: 'Concert', tiers: [] } as Event;
+      eventsRepoMock.findOne!.mockResolvedValue(mockEvent);
+
+      const result = await service.findEventById('e1');
+
+      expect(result).toEqual(mockEvent);
+      expect(eventsRepoMock.findOne).toHaveBeenCalledWith({
+        where: { id: 'e1' },
+        relations: ['tiers'],
+      });
+    });
+
+    it('should throw a NotFoundException if findOne returns null', async () => {
+      eventsRepoMock.findOne!.mockResolvedValue(null);
+
+      const action = service.findEventById('missing-id');
+
+      await expect(action).rejects.toThrow(NotFoundException);
+    });
   });
 });

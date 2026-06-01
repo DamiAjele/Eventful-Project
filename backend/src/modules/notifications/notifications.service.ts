@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { ConfigService } from '@nestjs/config';
 import { EventReminder } from './entities/event-reminder.entity';
 import { Notification } from './entities/notification.entity';
@@ -10,7 +10,7 @@ import { Notification } from './entities/notification.entity';
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
-  private transporter: nodemailer.Transporter | null = null;
+  private resendClient: Resend | null = null; // 2. Cleanly type the SDK property
 
   constructor(
     @InjectRepository(EventReminder)
@@ -19,16 +19,15 @@ export class NotificationsService {
     private notificationsRepo: Repository<Notification>,
     private config: ConfigService,
   ) {
-    const host = this.config.get<string>('SMTP_HOST');
-    const port = Number(this.config.get<number>('SMTP_PORT') || 587);
-    const user = this.config.get<string>('SMTP_USER');
-    const pass = this.config.get<string>('SMTP_PASS');
-    if (host && user) {
-      this.transporter = nodemailer.createTransport({
-        host,
-        port,
-        auth: { user, pass },
-      });
+    // 3. Resend only requires a single API Key instead of 4 SMTP parameters
+    const apiKey = this.config.get<string>('RESEND_API_KEY');
+
+    if (!apiKey) {
+      this.logger.error(
+        'RESEND_API_KEY configuration is missing! Email alerts will fail.',
+      );
+    } else {
+      this.resendClient = new Resend(apiKey);
     }
   }
 
@@ -54,24 +53,34 @@ export class NotificationsService {
     return new Promise((res) => setTimeout(res, ms));
   }
 
+  // 4. Refactored mailer payload typing to use parameters that match Resend's API
   private async sendMailWithRetry(
-    mail: nodemailer.SendMailOptions,
+    payload: { from: string; to: string; subject: string; text: string },
     maxAttempts = 3,
     baseDelay = 500,
   ) {
     let attempt = 0;
     let lastErr: any = null;
+
     while (attempt < maxAttempts) {
       try {
         attempt++;
-        if (!this.transporter) throw new Error('No transporter configured');
-        const res = await this.transporter.sendMail(mail);
-        return { success: true, attempt, info: res };
+        if (!this.resendClient)
+          throw new Error('Resend client is not initialized');
+
+        // 5. Fire via Resend SDK
+        const { data, error } = await this.resendClient.emails.send(payload);
+
+        if (error) {
+          throw error; // Force entry into catch block for retry calculation
+        }
+
+        return { success: true, attempt, info: data };
       } catch (err) {
         lastErr = err;
         const delayMs = baseDelay * Math.pow(2, attempt - 1);
         this.logger.warn(
-          `Send attempt ${attempt} failed; retrying in ${delayMs}ms`,
+          `Send attempt ${attempt} failed; retrying in ${delayMs}ms. Error: ${JSON.stringify(err)}`,
         );
         await this.delay(delayMs);
       }
@@ -81,32 +90,42 @@ export class NotificationsService {
 
   async sendReminder(reminder: EventReminder) {
     if (!reminder.recipients || reminder.recipients.length === 0) return;
+
     for (const rec of reminder.recipients) {
+      // Fixed the previous type casting error (was casting as a Notification array)
       const notif = this.notificationsRepo.create({
         channel: 'email',
         recipient: rec.email,
         message: reminder.message,
-      } as any);
+        sent: false,
+        attempts: 0,
+      }) as Notification;
+
       try {
-        const mail = {
-          from: this.config.get('EMAIL_FROM') || 'no-reply@example.com',
+        const mailPayload = {
+          from: this.config.get<string>('EMAIL_FROM') || 'no-reply@example.com',
           to: rec.email,
-          subject: `Reminder: ${reminder.event.title}`,
+          subject: `Reminder: ${reminder.event?.title || 'Upcoming Event'}`,
           text: reminder.message,
-        } as nodemailer.SendMailOptions;
-        const result = await this.sendMailWithRetry(mail, 3, 500);
-        notif.attempts = result.attempt || 0;
+        };
+
+        const result = await this.sendMailWithRetry(mailPayload, 3, 500);
+
         if (result.success) {
           notif.sent = true;
           notif.sentAt = new Date();
         } else {
-          notif.lastError = String(result.error ?? 'unknown');
+          notif.lastError =
+            typeof result.error === 'object'
+              ? JSON.stringify(result.error)
+              : String(result.error ?? 'unknown');
         }
       } catch (err) {
         this.logger.error(`Email send failed to ${rec.email}: ${err}`);
         notif.lastError = String(err);
       }
-      await this.notificationsRepo.save(notif);
+
+      await this.notificationsRepo.save(notif as any);
     }
   }
 
@@ -128,13 +147,16 @@ export class NotificationsService {
   // Admin helpers
   async listNotifications(limit = 100) {
     return this.notificationsRepo.find({
-      order: { createdAt: 'DESC' },
+      order: { createdAt: 'DESC' } as any,
       take: limit,
     });
   }
 
   async listReminders(limit = 100) {
-    return this.remindersRepo.find({ order: { sendAt: 'DESC' }, take: limit });
+    return this.remindersRepo.find({
+      order: { sendAt: 'DESC' } as any,
+      take: limit,
+    });
   }
 }
 

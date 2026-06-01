@@ -8,7 +8,12 @@ export class UsersController {
 
   @Post('register')
   async register(@Body() dto: CreateUserDto) {
-    const user = await this.usersService.create(dto.email, dto.password);
+    const user = await this.usersService.create(
+      dto.email,
+      dto.password,
+      dto.firstName,
+      dto.lastName,
+    );
     return { id: user.id, email: user.email, createdAt: user.createdAt };
   }
 }
