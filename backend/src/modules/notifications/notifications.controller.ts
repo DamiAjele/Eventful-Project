@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Get, Query } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 
 @Controller('notifications')
@@ -22,6 +22,18 @@ export class NotificationsController {
       sendAt,
       body.recipients || [],
     );
+  }
+
+  @Get('list')
+  async listNotifications(@Query('limit') limit?: string) {
+    const n = limit ? Number(limit) : undefined;
+    return this.notificationsService.listNotifications(n ?? 100);
+  }
+
+  @Get('reminders')
+  async listReminders(@Query('limit') limit?: string) {
+    const n = limit ? Number(limit) : undefined;
+    return this.notificationsService.listReminders(n ?? 100);
   }
 }
 

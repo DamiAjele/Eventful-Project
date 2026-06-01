@@ -25,6 +25,12 @@ export class Notification {
   @Column({ type: 'timestamptz', nullable: true })
   sentAt?: Date | null;
 
+  @Column({ type: 'int', default: 0 })
+  attempts: number;
+
+  @Column({ type: 'text', nullable: true })
+  lastError?: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

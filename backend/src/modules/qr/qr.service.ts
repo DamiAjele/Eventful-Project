@@ -14,6 +14,7 @@ import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class QrService {
+  private readonly logger = new Logger(QrService.name);
   constructor(
     @InjectRepository(Ticket) private ticketsRepo: Repository<Ticket>,
     private dataSource: DataSource,
@@ -49,7 +50,7 @@ export class QrService {
       }
     } catch (err) {
       // fall back to data URL
-      Logger.warn(`Cloudinary upload failed, using data URL: ${err}`);
+      this.logger.warn(`Cloudinary upload failed, using data URL: ${err}`);
     }
 
     ticket.qrCodeUrl = storedUrl;

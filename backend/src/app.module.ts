@@ -12,6 +12,7 @@ import { EventsModule } from './modules/events/events.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { QrModule } from './modules/qr/qr.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { QrModule } from './modules/qr/qr.module';
     PaymentsModule,
     // QR codes
     QrModule,
+    AnalyticsModule,
     NotificationsModule,
   ],
   controllers: [AppController],

@@ -36,7 +36,6 @@ export class NotificationsService {
   @Cron('*/1 * * * *')
   async processScheduledReminders() {
     this.logger.debug('Checking for scheduled reminders...');
-    const now = new Date();
     const pending = await this.remindersRepo.find({
       where: { sent: false, sendAt: () => `sendAt <= NOW()` } as any,
     });
@@ -51,6 +50,35 @@ export class NotificationsService {
     }
   }
 
+  private async delay(ms: number) {
+    return new Promise((res) => setTimeout(res, ms));
+  }
+
+  private async sendMailWithRetry(
+    mail: nodemailer.SendMailOptions,
+    maxAttempts = 3,
+    baseDelay = 500,
+  ) {
+    let attempt = 0;
+    let lastErr: any = null;
+    while (attempt < maxAttempts) {
+      try {
+        attempt++;
+        if (!this.transporter) throw new Error('No transporter configured');
+        const res = await this.transporter.sendMail(mail);
+        return { success: true, attempt, info: res };
+      } catch (err) {
+        lastErr = err;
+        const delayMs = baseDelay * Math.pow(2, attempt - 1);
+        this.logger.warn(
+          `Send attempt ${attempt} failed; retrying in ${delayMs}ms`,
+        );
+        await this.delay(delayMs);
+      }
+    }
+    return { success: false, attempt: maxAttempts, error: lastErr };
+  }
+
   async sendReminder(reminder: EventReminder) {
     if (!reminder.recipients || reminder.recipients.length === 0) return;
     for (const rec of reminder.recipients) {
@@ -60,18 +88,23 @@ export class NotificationsService {
         message: reminder.message,
       } as any);
       try {
-        if (this.transporter) {
-          await this.transporter.sendMail({
-            from: this.config.get('EMAIL_FROM') || 'no-reply@example.com',
-            to: rec.email,
-            subject: `Reminder: ${reminder.event.title}`,
-            text: reminder.message,
-          });
+        const mail = {
+          from: this.config.get('EMAIL_FROM') || 'no-reply@example.com',
+          to: rec.email,
+          subject: `Reminder: ${reminder.event.title}`,
+          text: reminder.message,
+        } as nodemailer.SendMailOptions;
+        const result = await this.sendMailWithRetry(mail, 3, 500);
+        notif.attempts = result.attempt || 0;
+        if (result.success) {
           notif.sent = true;
           notif.sentAt = new Date();
+        } else {
+          notif.lastError = String(result.error ?? 'unknown');
         }
       } catch (err) {
         this.logger.error(`Email send failed to ${rec.email}: ${err}`);
+        notif.lastError = String(err);
       }
       await this.notificationsRepo.save(notif);
     }
@@ -90,6 +123,18 @@ export class NotificationsService {
       recipients,
     } as any);
     return this.remindersRepo.save(rem);
+  }
+
+  // Admin helpers
+  async listNotifications(limit = 100) {
+    return this.notificationsRepo.find({
+      order: { createdAt: 'DESC' },
+      take: limit,
+    });
+  }
+
+  async listReminders(limit = 100) {
+    return this.remindersRepo.find({ order: { sendAt: 'DESC' }, take: limit });
   }
 }
 
