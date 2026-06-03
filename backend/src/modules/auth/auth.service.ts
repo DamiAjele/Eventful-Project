@@ -46,6 +46,10 @@ export class AuthService {
     await this.usersService.setRefreshTokenHash(user.id, newHash);
     return tokens;
   }
+
+  async logout(userId: string) {
+    await this.usersService.removeRefreshToken(userId);
+  }
 }
 
 export default AuthService;

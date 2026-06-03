@@ -29,6 +29,9 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
           config.get('NODE_ENV') === 'production'
             ? { rejectUnauthorized: false }
             : false,
+        extra: {
+          sslmode: 'verify-full',
+        },
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: config.get('NODE_ENV') !== 'production',
         migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],

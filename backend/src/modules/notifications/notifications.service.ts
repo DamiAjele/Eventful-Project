@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThanOrEqual } from 'typeorm';
 import { Resend } from 'resend';
 import { ConfigService } from '@nestjs/config';
 import { EventReminder } from './entities/event-reminder.entity';
@@ -36,7 +36,7 @@ export class NotificationsService {
   async processScheduledReminders() {
     this.logger.debug('Checking for scheduled reminders...');
     const pending = await this.remindersRepo.find({
-      where: { sent: false, sendAt: () => `sendAt <= NOW()` } as any,
+      where: { sent: false, sendAt: LessThanOrEqual(new Date()) } as any,
     });
     for (const r of pending) {
       try {

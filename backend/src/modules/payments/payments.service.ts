@@ -15,7 +15,8 @@ import { Ticket } from '../tickets/entities/ticket.entity';
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
-  private readonly base = 'https://api.paystack.co';
+  private readonly base =
+    process.env.PAYSTACK_BASE_URL || 'https://api.paystack.co';
 
   constructor(
     private readonly config: ConfigService,
@@ -26,7 +27,9 @@ export class PaymentsService {
   ) {}
 
   private authHeaders() {
-    const sk = this.config.get<string>('PAYSTACK_SECRET') || '';
+    const sk =
+      this.config.get<string>('PAYSTACK_SECRET_KEY') ||
+      process.env.PAYSTACK_SECRET_KEY;
     return { Authorization: `Bearer ${sk}` };
   }
 
@@ -116,7 +119,7 @@ export class PaymentsService {
 
   // Handle webhook payload: expects raw body and signature header
   async handleWebhook(rawBody: Buffer, signature: string) {
-    const secret = this.config.get<string>('PAYSTACK_SECRET') || '';
+    const secret = this.config.get<string>('PAYSTACK_SECRET_KEY') || '';
     const crypto = await import('crypto');
     const hash = crypto
       .createHmac('sha512', secret)

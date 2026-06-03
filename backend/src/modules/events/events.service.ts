@@ -35,6 +35,17 @@ export class EventsService {
     if (!ev) throw new NotFoundException('Event not found');
     return ev;
   }
+
+  async updateEvent(id: string, data: Partial<Event>) {
+    const ev = await this.eventsRepo.findOneBy({ id });
+    if (!ev) throw new NotFoundException('Event not found');
+    Object.assign(ev, data);
+    return this.eventsRepo.save(ev);
+  }
+
+  async findAllEvents() {
+    return this.eventsRepo.find({ relations: ['tiers'] });
+  }
 }
 
 export default EventsService;

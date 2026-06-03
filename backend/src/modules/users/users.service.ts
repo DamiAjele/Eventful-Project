@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -17,15 +17,24 @@ export class UsersService {
     firstName: string,
     lastName: string,
     password: string,
+    role: string = 'EVENTEE',
   ) {
     const existing = await this.usersRepo.findOneBy({ email });
     if (existing) throw new ConflictException('Email already registered');
+
     const hashed = await bcrypt.hash(password, 10);
+
+    // Map frontend roles to backend roles
+    let mappedRole: UserRole = UserRole.ATTENDEE;
+    if (role.toUpperCase() === 'CREATOR') mappedRole = UserRole.CREATOR;
+    if (role.toUpperCase() === 'EVENTEE') mappedRole = UserRole.ATTENDEE;
+
     const user = this.usersRepo.create({
       email,
       firstName,
       lastName,
       password: hashed,
+      role: mappedRole,
     });
     return this.usersRepo.save(user);
   }
