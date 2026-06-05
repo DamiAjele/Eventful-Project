@@ -5,8 +5,8 @@ import { AnalyticsService } from './analytics.service';
 export class AnalyticsController {
   constructor(private readonly analytics: AnalyticsService) {}
 
-  @Get('events/:id/summary')
-  async eventSummary(@Param('id') id: string) {
+  @Get('events/:eventId/summary')
+  async eventSummary(@Param('eventId') id: string) {
     return this.analytics.getEventSummary(id);
   }
 }

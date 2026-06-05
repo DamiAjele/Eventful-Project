@@ -1,6 +1,12 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  NotFoundException,
+  Get,
+  Param,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import {
   ApiOperation,
   ApiBody,
@@ -11,49 +17,45 @@ import {
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-  @ApiOperation({ summary: 'Register a new user' })
-  @ApiBody({ type: CreateUserDto })
-  @ApiCreatedResponse({
-    description: 'User registered successfully',
-    type: Object,
-  })
-  @ApiBadRequestResponse({ description: 'Bad request' })
-  @Post('register')
-  async register(@Body() dto: CreateUserDto) {
-    const user = await this.usersService.create(
-      dto.email,
-      dto.password,
-      dto.firstName,
-      dto.lastName,
-    );
-    return { id: user.id, email: user.email, createdAt: user.createdAt };
-  }
 
   @ApiOperation({ summary: 'Get user by email' })
-  @ApiBody({
-    type: String,
-    description: 'User email address',
-  })
   @ApiCreatedResponse({
     description: 'User found successfully',
     type: Object,
   })
   @ApiBadRequestResponse({ description: 'User not found' })
-  @Post('findByEmail')
-  async findByEmail(@Body('email') email: string) {
-    return this.usersService.findByEmail(email);
+  @Get(':email')
+  async findByEmail(@Param('email') email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return {
+      message: 'User found successfully',
+      user: { id: user.id, email: user.email, role: user.role },
+    };
   }
 
   @ApiOperation({ summary: 'Get user by ID' })
-  @ApiBody({ type: String, description: 'User ID' })
   @ApiCreatedResponse({
     description: 'User found successfully',
     type: Object,
   })
   @ApiBadRequestResponse({ description: 'User not found' })
-  @Post('findById')
-  async findById(@Body('id') id: string) {
-    return this.usersService.findById(id);
+  @Get('/:id')
+  async findById(@Param('id') id: string) {
+    const user = await this.usersService.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return {
+      message: 'User found successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    };
   }
 
   @ApiOperation({ summary: 'Set refresh token hash' })

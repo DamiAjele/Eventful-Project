@@ -17,7 +17,7 @@ export class UsersService {
     firstName: string,
     lastName: string,
     password: string,
-    role: string = 'EVENTEE',
+    role: string = 'ATTENDEE',
   ) {
     const existing = await this.usersRepo.findOneBy({ email });
     if (existing) throw new ConflictException('Email already registered');
@@ -27,7 +27,7 @@ export class UsersService {
     // Map frontend roles to backend roles
     let mappedRole: UserRole = UserRole.ATTENDEE;
     if (role.toUpperCase() === 'CREATOR') mappedRole = UserRole.CREATOR;
-    if (role.toUpperCase() === 'EVENTEE') mappedRole = UserRole.ATTENDEE;
+    if (role.toUpperCase() === 'ATTENDEE') mappedRole = UserRole.ATTENDEE;
 
     const user = this.usersRepo.create({
       email,

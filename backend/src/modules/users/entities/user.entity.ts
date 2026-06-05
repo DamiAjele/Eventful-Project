@@ -32,6 +32,9 @@ export class User {
   @Column({ type: 'varchar', default: UserRole.ATTENDEE })
   role!: UserRole;
 
+  @Column({ default: false })
+  isEmailVerified!: boolean;
+
   @Column({ type: 'text', nullable: true })
   refreshTokenHash?: string | null;
 

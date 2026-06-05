@@ -7,6 +7,7 @@ import {
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { CreateEventDto, updateEventDto } from '../events/dto/event.dto';
+import { CreateTicketTierDto } from './dto/ticket-tier.dto';
 
 @Controller('events')
 export class EventsController {
@@ -31,15 +32,18 @@ export class EventsController {
     });
   }
 
-  @Post(':id/tiers')
-  @ApiOperation({ summary: 'Add a tier to an existing event' })
-  @ApiBody({ type: Object })
+  @Post(':eventId/tiers')
+  @ApiOperation({ summary: 'Add a ticket tier to an existing event' })
+  @ApiBody({ type: CreateTicketTierDto })
   @ApiCreatedResponse({
     description: 'Tier added successfully',
     type: Object,
   })
   @ApiBadRequestResponse({ description: 'Bad request' })
-  async addTier(@Param('id') id: string, @Body() body: any) {
+  async addTier(
+    @Param('eventId') id: string,
+    @Body() body: CreateTicketTierDto,
+  ) {
     return this.eventsService.addTier(id, body);
   }
 

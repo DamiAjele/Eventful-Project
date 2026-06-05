@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
 import { TicketTier } from './entities/ticket-tier.entity';
+import { CreateTicketTierDto } from './dto/ticket-tier.dto';
 
 @Injectable()
 export class EventsService {
@@ -16,7 +17,7 @@ export class EventsService {
     return this.eventsRepo.save(ev);
   }
 
-  async addTier(eventId: string, tierData: Partial<TicketTier>) {
+  async addTier(eventId: string, tierData: CreateTicketTierDto) {
     const event = await this.eventsRepo.findOneBy({ id: eventId });
     if (!event) throw new NotFoundException('Event not found');
     const tier = this.tiersRepo.create({

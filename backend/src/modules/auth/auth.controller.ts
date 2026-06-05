@@ -45,7 +45,8 @@ export class AuthController {
         firstName: user.firstName,
         lastName: user.lastName,
         fullName: `${user.firstName} ${user.lastName}`,
-        role: user.role === 'creator' ? 'CREATOR' : 'EVENTEE',
+        role: user.role === 'creator' ? 'CREATOR' : 'ATTENDEE',
+        isEmailVerified: user.isEmailVerified,
         createdAt: user.createdAt,
       },
       ...tokens,
@@ -67,14 +68,13 @@ export class AuthController {
     const tokens = await this.authService.login(user);
 
     return {
+      message: 'Logged in succesfully',
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
         fullName: `${user.firstName} ${user.lastName}`,
-        role: user.role === 'creator' ? 'CREATOR' : 'EVENTEE',
-        createdAt: user.createdAt,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
       },
       ...tokens,
     };
@@ -120,7 +120,8 @@ export class AuthController {
   async logout(@Body('userId') userId: string) {
     const user = await this.usersService.findById(userId);
     if (!user) throw new Error('User not found');
-    return this.authService.logout(user.id);
+    await this.authService.logout(user.id);
+    return { message: 'Logged out successfully' };
   }
 }
 
