@@ -3,7 +3,7 @@
 This is the Eventful monolithic NestJS backend for an event ticketing platform. It provides REST APIs for authentication, events, tickets, payments (Paystack), QR generation/validation, notifications, and analytics.
 
 ### Swagger Docs
-[Swagger Docs]("http://localhost:4000/api/docs")
+[Swagger Docs](http://localhost:4000/api/docs)
 
 ## Tech stack
 
