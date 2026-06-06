@@ -4,6 +4,8 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import * as express from 'express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
+const port = Number(process.env.PORT ?? 4000);
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // preserve rawBody for webhook signature verification
@@ -39,7 +41,6 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
     Logger.log('Swagger docs available at /api/docs');
   }
-  const port = Number(process.env.PORT ?? 4000);
   await app.listen(port);
   Logger.log(`Server running at port ${port}`);
 }
