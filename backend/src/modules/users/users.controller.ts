@@ -1,10 +1,9 @@
 import {
-  Body,
   Controller,
-  Post,
   NotFoundException,
   Get,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
@@ -13,6 +12,11 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UserRole } from '../users/entities/user.entity';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { Post, Body } from '@nestjs/common';
 
 @Controller('users')
 export class UsersController {
@@ -25,6 +29,8 @@ export class UsersController {
   })
   @ApiBadRequestResponse({ description: 'User not found' })
   @Get(':email')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CREATOR)
   async findByEmail(@Param('email') email: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
@@ -42,6 +48,8 @@ export class UsersController {
     type: Object,
   })
   @ApiBadRequestResponse({ description: 'User not found' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CREATOR)
   @Get('/:id')
   async findById(@Param('id') id: string) {
     const user = await this.usersService.findById(id);

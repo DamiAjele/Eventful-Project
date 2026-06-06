@@ -29,10 +29,12 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async login(user: any) {
-    const tokens = await this.generateTokens(user);
+  async login(user: { email: string; password: string }) {
+    const validatedUser = await this.validateUser(user.email, user.password);
+    if (!validatedUser) throw new UnauthorizedException();
+    const tokens = await this.generateTokens(validatedUser);
     const hashed = await bcrypt.hash(tokens.refreshToken, 10);
-    await this.usersService.setRefreshTokenHash(user.id, hashed);
+    await this.usersService.setRefreshTokenHash(validatedUser.id, hashed);
     return tokens;
   }
 

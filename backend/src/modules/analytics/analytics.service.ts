@@ -23,7 +23,7 @@ export class AnalyticsService {
   async recordPaymentEvent(payment: Payment) {
     try {
       const eventId =
-        payment.tier?.event?.id ?? (payment.tier as any)?.event?.id;
+        payment.type?.eventId?.id ?? (payment.type as any)?.event?.id;
       if (!eventId) return;
       const revenueKey = `analytics:revenue:event:${eventId}`;
       const salesKey = `analytics:sales:event:${eventId}`;
@@ -48,7 +48,8 @@ export class AnalyticsService {
   // Record ticket sale (direct ticket creation)
   async recordTicketSale(ticket: Ticket) {
     try {
-      const eventId = ticket.tier?.event?.id ?? (ticket.tier as any)?.event?.id;
+      const eventId =
+        ticket.type?.eventId?.id ?? (ticket.type as any)?.event?.id;
       if (!eventId) return;
       const salesKey = `analytics:sales:event:${eventId}`;
       await this.redisClient.incrby(salesKey, 1);

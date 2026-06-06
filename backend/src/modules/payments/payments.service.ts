@@ -9,8 +9,10 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Payment, PaymentStatus } from './entities/payment.entity';
-import { TicketTier } from '../events/entities/ticket-tier.entity';
+import { TicketType } from '../events/entities/ticket-type.entity';
 import { Ticket } from '../tickets/entities/ticket.entity';
+import { OrderRepository } from '../orders/order.repository';
+import { OrderStatus } from '../orders/entities/order-status.enum';
 
 @Injectable()
 export class PaymentsService {
@@ -22,8 +24,9 @@ export class PaymentsService {
     private readonly config: ConfigService,
     private dataSource: DataSource,
     @InjectRepository(Payment) private paymentsRepo: Repository<Payment>,
-    @InjectRepository(TicketTier) private tiersRepo: Repository<TicketTier>,
+    @InjectRepository(TicketType) private tiersRepo: Repository<TicketType>,
     @InjectRepository(Ticket) private ticketsRepo: Repository<Ticket>,
+    private readonly orderRepo: OrderRepository,
   ) {}
 
   private authHeaders() {
@@ -33,35 +36,46 @@ export class PaymentsService {
     return { Authorization: `Bearer ${sk}` };
   }
 
-  async initializePayment(tierId: string, qty: number, payerEmail: string) {
-    const tier = await this.tiersRepo.findOneBy({ id: tierId });
-    if (!tier) throw new NotFoundException('Tier not found');
-    if (tier.remainingQuantity < qty)
-      throw new BadRequestException('Not enough tickets available');
+  // Initialize payment for an existing Order
+  async initializePaymentForOrder(orderId: string, payerEmail: string) {
+    if (!this.orderRepo)
+      throw new BadRequestException('OrderRepository not available');
 
-    const amount = Math.round(Number(tier.price) * qty * 100); // in kobo
+    const order = await this.orderRepo.findById(orderId);
+    if (!order) throw new NotFoundException('Order not found');
+    if (order.status !== OrderStatus.AWAITING_PAYMENT)
+      throw new BadRequestException('Order not payable');
 
-    const body = { email: payerEmail, amount, metadata: { tierId, qty } };
+    const amount = Math.round(Number(order.totalAmount) * 100); // in kobo
+
+    const reference = `ORDER_${order.id}_${Date.now()}`;
+
+    const body = {
+      email: payerEmail,
+      amount,
+      reference,
+      metadata: {
+        orderId: order.id,
+        userId: order.userId,
+        eventId: order.eventId,
+      },
+      currency: 'NGN',
+    };
+
     const resp = await axios.post(`${this.base}/transaction/initialize`, body, {
       headers: this.authHeaders(),
     });
-    const data = resp.data?.data;
-    if (!data) throw new BadRequestException('Failed to initialize payment');
 
-    const payment = this.paymentsRepo.create({
-      reference: data.reference,
-      tier,
-      qty,
-      amount: (amount / 100).toString(),
-      payerEmail,
-      status: PaymentStatus.PENDING,
-      providerResponse: data,
-    } as any);
-    await this.paymentsRepo.save(payment);
+    const data = resp.data?.data;
+    if (!data) throw new BadRequestException('Payment initialization failed');
+
+    // save reference to order
+    await this.orderRepo.updatePaymentReference(order.id, reference);
 
     return {
-      authorization_url: data.authorization_url,
-      reference: data.reference,
+      authorizationUrl: data.authorization_url,
+      accessCode: data.access_code,
+      reference,
     };
   }
 
@@ -90,8 +104,8 @@ export class PaymentsService {
     // Fulfill: decrement tier and create tickets atomically
     const createdTickets = await this.dataSource.transaction(
       async (manager) => {
-        const tier = await manager.findOne(TicketTier, {
-          where: { id: payment.tier.id },
+        const tier = await manager.findOne(TicketType, {
+          where: { id: payment.type.id },
           lock: { mode: 'pessimistic_write' },
         });
         if (!tier)

@@ -42,7 +42,8 @@
     "reflect-metadata": "^0.2.2",
     "resend": "^6.12.4",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.17"
+    "typeorm": "^0.3.17",
+    "uuid": "^14.0.0"
   },
   "optionalDependencies": {
     "qrcode": "^1.5.1"

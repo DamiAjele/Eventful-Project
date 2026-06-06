@@ -1,9 +1,10 @@
+import { jest, describe, beforeEach, it, expect } from '@jest/globals';
+import { AuthService } from '../auth.service';
+
 jest.mock('bcryptjs', () => ({
   compare: jest.fn().mockResolvedValue(true),
   hash: jest.fn().mockResolvedValue('rh'),
 }));
-
-import { AuthService } from '../auth.service';
 
 describe('AuthService', () => {
   const usersService: any = {

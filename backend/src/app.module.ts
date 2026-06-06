@@ -16,6 +16,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { QrModule } from './modules/qr/qr.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { OrderModule } from './modules/orders/order.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     QrModule,
     AnalyticsModule,
     NotificationsModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [

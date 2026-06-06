@@ -10,13 +10,13 @@ import {
 import { Event } from './event.entity';
 import { Ticket } from '../../tickets/entities/ticket.entity';
 
-@Entity({ name: 'ticket_tiers' })
-export class TicketTier {
+@Entity({ name: 'ticket_types' })
+export class TicketType {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @ManyToOne(() => Event, (event) => event.tiers, { onDelete: 'CASCADE' })
-  event!: Event;
+  eventId!: Event;
 
   @Column()
   name!: string;
@@ -30,7 +30,7 @@ export class TicketTier {
   @Column({ type: 'int', default: 0 })
   remainingQuantity!: number;
 
-  @OneToMany(() => Ticket, (t) => t.tier)
+  @OneToMany(() => Ticket, (t) => t.type)
   tickets!: Ticket[];
 
   @CreateDateColumn()
@@ -40,4 +40,4 @@ export class TicketTier {
   updatedAt!: Date;
 }
 
-export default TicketTier;
+export default TicketType;

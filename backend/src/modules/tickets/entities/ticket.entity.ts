@@ -5,7 +5,7 @@ import {
   ManyToOne,
   CreateDateColumn,
 } from 'typeorm';
-import { TicketTier } from '../../events/entities/ticket-tier.entity';
+import { TicketType } from '../../events/entities/ticket-type.entity';
 import { User } from '../../users/entities/user.entity';
 
 @Entity({ name: 'tickets' })
@@ -13,11 +13,11 @@ export class Ticket {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @ManyToOne(() => TicketTier, (tier) => tier.tickets, { eager: true })
-  tier!: TicketTier;
+  @ManyToOne(() => TicketType, (type) => type.tickets, { eager: true })
+  type!: TicketType;
 
   @ManyToOne(() => User, { nullable: true, eager: true })
-  user?: User | null;
+  userId!: User | null;
 
   @Column({ unique: true })
   code!: string;

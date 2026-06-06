@@ -4,7 +4,9 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { Event } from '../../events/entities/event.entity';
 
 export enum UserRole {
   ATTENDEE = 'attendee',
@@ -34,6 +36,9 @@ export class User {
 
   @Column({ default: false })
   isEmailVerified!: boolean;
+
+  @OneToMany(() => Event, (event) => event.userId)
+  events?: Event[];
 
   @Column({ type: 'text', nullable: true })
   refreshTokenHash?: string | null;

@@ -49,7 +49,7 @@ describe('NotificationsService', () => {
     };
 
     configMock = {
-      get: jest.fn().mockImplementation((k: string) => {
+      get: jest.fn().mockImplementation((k: any) => {
         if (k === 'RESEND_API_KEY') return 're_123456789';
         if (k === 'EMAIL_FROM') return 'no-reply@example.com';
         return undefined;
@@ -80,7 +80,10 @@ describe('NotificationsService', () => {
 
   it('sendReminder hits resend client and saves status on success', async () => {
     // Arrange: Resend returns a successful response payload structure
-    mockSendEmail.mockResolvedValue({ data: { id: 'email_id' }, error: null });
+    mockSendEmail.mockResolvedValue({
+      data: { id: 'email_123', status: 'delivered' },
+      error: null,
+    } as any);
 
     // Act
     await service.sendReminder(mockReminder);
@@ -100,12 +103,13 @@ describe('NotificationsService', () => {
     mockSendEmail.mockResolvedValue({
       data: null,
       error: { message: 'API Rate limit reached' },
-    });
+    } as any);
 
     // Act
     // We explicitly speed up our tests by overriding the base delay to 1ms instead of 500ms
-    const sendMailSpy = jest.spyOn(service as any, 'sendMailWithRetry');
+    jest.spyOn(service as any, 'sendMailWithRetry');
 
+    // Call the real sendReminder which will use the spied sendMailWithRetry
     await service.sendReminder(mockReminder);
 
     // Assert

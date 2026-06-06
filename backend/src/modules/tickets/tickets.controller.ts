@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { TicketsService } from './tickets.service';
 import {
   ApiOperation,
@@ -6,6 +6,10 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
+import { UserRole } from '../users/entities/user.entity';
+import { Roles } from '../auth/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Controller('tickets')
 export class TicketsController {
@@ -26,6 +30,8 @@ export class TicketsController {
   })
   @ApiBadRequestResponse({ description: 'Invalid purchase request' })
   @Post('purchase')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ATTENDEE, UserRole.CREATOR)
   async purchase(
     @Body() body: { tierId: string; qty?: number },
     @Req() req: any,

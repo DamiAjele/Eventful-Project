@@ -6,14 +6,14 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Ticket } from './entities/ticket.entity';
-import { TicketTier } from '../events/entities/ticket-tier.entity';
+import { TicketType } from '../events/entities/ticket-type.entity';
 import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class TicketsService {
   constructor(
     @InjectRepository(Ticket) private ticketsRepo: Repository<Ticket>,
-    @InjectRepository(TicketTier) private tiersRepo: Repository<TicketTier>,
+    @InjectRepository(TicketType) private tiersRepo: Repository<TicketType>,
     private dataSource: DataSource,
   ) {}
 
@@ -23,7 +23,7 @@ export class TicketsService {
 
   async purchaseTier(userId: string | null, tierId: string, qty = 1) {
     return this.dataSource.transaction(async (manager) => {
-      const tier = await manager.findOne(TicketTier, {
+      const tier = await manager.findOne(TicketType, {
         where: { id: tierId },
         lock: { mode: 'pessimistic_write' },
       });
@@ -37,7 +37,7 @@ export class TicketsService {
       for (let i = 0; i < qty; i++) {
         const code = this.generateCode();
         const t = manager.create(Ticket, { tier, code } as any);
-        if (userId) t.user = { id: userId } as User;
+        if (userId) t.userId = { id: userId } as User;
         tickets.push(await manager.save(t));
       }
       return tickets;

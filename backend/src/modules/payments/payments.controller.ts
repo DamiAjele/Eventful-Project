@@ -1,4 +1,11 @@
-import { Body, Controller, Headers, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { PaymentsService } from './payments.service';
 import {
@@ -8,25 +15,26 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UserRole } from '../users/entities/user.entity';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
 @ApiTags('payments')
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Post('initialize')
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
-  @ApiOperation({ summary: 'Initialize a payment for a specific tier' })
+  @ApiOperation({ summary: 'Initialize payment for an order' })
   @ApiBody({
     schema: {
       properties: {
-        tierId: { type: 'string' },
-        qty: { type: 'number' },
-        email: { type: 'string' },
+        orderId: { type: 'string' },
+        email: { type: 'string', format: 'email' },
       },
+      required: ['orderId', 'email'],
     },
-    description:
-      'Payment initialization details including tierId, quantity, and email',
+    description: 'Initialize a payment for a specific order',
   })
   @ApiCreatedResponse({
     description: 'Payment initialized successfully',
@@ -34,14 +42,21 @@ export class PaymentsController {
   @ApiBadRequestResponse({
     description: 'Invalid payment initialization request',
   })
-  async initialize(
-    @Body() body: { tierId: string; qty: number; email: string },
-  ) {
-    return this.paymentsService.initializePayment(
-      body.tierId,
-      body.qty ?? 1,
+  @Post('initialize-order')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ATTENDEE, UserRole.CREATOR)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Initialize a payment for an order' })
+  async initializeOrder(@Body() body: { orderId: string; email: string }) {
+    await this.paymentsService.initializePaymentForOrder(
+      body.orderId,
       body.email,
     );
+    return {
+      message: 'Payment initialized successfully',
+      orderId: body.orderId,
+      email: body.email,
+    };
   }
 
   @Post('verify')

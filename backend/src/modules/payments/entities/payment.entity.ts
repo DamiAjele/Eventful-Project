@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
 } from 'typeorm';
-import { TicketTier } from '../../events/entities/ticket-tier.entity';
+import { TicketType } from '../../events/entities/ticket-type.entity';
 
 export enum PaymentStatus {
   PENDING = 'pending',
@@ -21,8 +21,8 @@ export class Payment {
   @Column({ unique: true })
   reference!: string;
 
-  @ManyToOne(() => TicketTier, { eager: true })
-  tier!: TicketTier;
+  @ManyToOne(() => TicketType, { eager: true })
+  type!: TicketType;
 
   @Column({ type: 'int', default: 1 })
   qty!: number;

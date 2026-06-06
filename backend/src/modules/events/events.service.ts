@@ -2,30 +2,38 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
-import { TicketTier } from './entities/ticket-tier.entity';
-import { CreateTicketTierDto } from './dto/ticket-tier.dto';
+import { TicketType } from './entities/ticket-type.entity';
+import { CreateTicketTierDto } from './dto/ticket-type.dto';
+import { CreateEventDto } from './dto/event.dto';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectRepository(Event) private eventsRepo: Repository<Event>,
-    @InjectRepository(TicketTier) private tiersRepo: Repository<TicketTier>,
+    @InjectRepository(TicketType) private tiersRepo: Repository<TicketType>,
   ) {}
 
-  async createEvent(data: Partial<Event>) {
-    const ev = this.eventsRepo.create(data as Event);
+  async createEvent(data: CreateEventDto) {
+    const ev = this.eventsRepo.create(data);
     return this.eventsRepo.save(ev);
   }
 
-  async addTier(eventId: string, tierData: CreateTicketTierDto) {
+  async addTicketType(eventId: string, typeData: CreateTicketTierDto) {
     const event = await this.eventsRepo.findOneBy({ id: eventId });
     if (!event) throw new NotFoundException('Event not found');
     const tier = this.tiersRepo.create({
-      ...tierData,
-      event,
-      remainingQuantity: tierData.quantity ?? 0,
+      ...typeData,
+      eventId: event.id,
+      remainingQuantity: typeData.quantity ?? 0,
     } as any);
     return this.tiersRepo.save(tier);
+  }
+
+  async validateEvent(eventId: string) {
+    const event = await this.eventsRepo.findOneBy({ id: eventId });
+    if (!event) throw new NotFoundException('Event not found');
+    if (!event.isPublished) throw new NotFoundException('Event not published');
+    return event;
   }
 
   async findEventById(id: string) {

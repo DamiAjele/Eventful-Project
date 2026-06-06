@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Query } from '@nestjs/common';
+import { Body, Controller, Post, Get, Query, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { NotificationsService } from './notifications.service';
 import {
@@ -8,6 +8,10 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
+import { UserRole } from '../users/entities/user.entity';
+import { Roles } from '../auth/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @ApiTags('notifications')
 @Controller('notifications')
@@ -43,6 +47,8 @@ export class NotificationsController {
     description: 'Invalid reminder scheduling request',
   })
   @Post('reminders')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CREATOR)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async createReminder(
     @Body()
@@ -63,6 +69,8 @@ export class NotificationsController {
   }
 
   @Get('list')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CREATOR)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async listNotifications(@Query('limit') limit?: string) {
     const n = limit ? Number(limit) : undefined;
@@ -70,6 +78,8 @@ export class NotificationsController {
   }
 
   @Get('reminders')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CREATOR)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async listReminders(@Query('limit') limit?: string) {
     const n = limit ? Number(limit) : undefined;

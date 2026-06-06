@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { EventsService } from './events.service';
 import {
   ApiOperation,
@@ -7,13 +15,19 @@ import {
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { CreateEventDto, updateEventDto } from '../events/dto/event.dto';
-import { CreateTicketTierDto } from './dto/ticket-tier.dto';
+import { CreateTicketTierDto } from './dto/ticket-type.dto';
+import { RolesGuard } from '../auth/roles.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UserRole } from '../users/entities/user.entity';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
-  @Post()
+  @Post('create-event')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CREATOR)
   @ApiOperation({ summary: 'Create a new event' })
   @ApiBody({ type: CreateEventDto })
   @ApiCreatedResponse({
@@ -22,32 +36,47 @@ export class EventsController {
   })
   @ApiBadRequestResponse({ description: 'Bad request' })
   async create(@Body() body: CreateEventDto) {
-    return this.eventsService.createEvent({
+    await this.eventsService.createEvent({
       ...body,
       startAt:
-        typeof body.startAt === 'string'
-          ? new Date(body.startAt)
+        typeof body.startAt === 'object' &&
+        (body.startAt as any) instanceof Date
+          ? body.startAt
           : body.startAt,
-      endAt: typeof body.endAt === 'string' ? new Date(body.endAt) : body.endAt,
+      endAt:
+        typeof body.endAt === 'object' && (body.endAt as any) instanceof Date
+          ? body.endAt
+          : body.endAt,
     });
+
+    return {
+      message: 'Event created successfully',
+      event: body,
+      startAt: body.startAt,
+      endAt: body.endAt,
+    };
   }
 
-  @Post(':eventId/tiers')
-  @ApiOperation({ summary: 'Add a ticket tier to an existing event' })
+  @Post(':eventId/ticket-type')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CREATOR)
+  @ApiOperation({ summary: 'Add a ticket type to an existing event' })
   @ApiBody({ type: CreateTicketTierDto })
   @ApiCreatedResponse({
-    description: 'Tier added successfully',
+    description: 'Ticket type added successfully',
     type: Object,
   })
   @ApiBadRequestResponse({ description: 'Bad request' })
-  async addTier(
+  async addTicketType(
     @Param('eventId') id: string,
     @Body() body: CreateTicketTierDto,
   ) {
-    return this.eventsService.addTier(id, body);
+    return this.eventsService.addTicketType(id, body);
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CREATOR, UserRole.ATTENDEE)
   @ApiOperation({ summary: 'Get event details' })
   @ApiCreatedResponse({
     description: 'Event details retrieved successfully',
@@ -59,6 +88,8 @@ export class EventsController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CREATOR)
   @ApiOperation({ summary: 'Update event details' })
   @ApiBody({ type: updateEventDto })
   @ApiCreatedResponse({
@@ -71,6 +102,8 @@ export class EventsController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CREATOR, UserRole.ATTENDEE)
   @ApiOperation({ summary: 'Get all events' })
   @ApiCreatedResponse({
     description: 'Events retrieved successfully',

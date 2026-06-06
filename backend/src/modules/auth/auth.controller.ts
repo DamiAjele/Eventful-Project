@@ -36,7 +36,6 @@ export class AuthController {
       dto.password,
       dto.role,
     );
-    const tokens = await this.authService.login(user);
 
     return {
       user: {
@@ -44,12 +43,12 @@ export class AuthController {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        password: user.password,
         fullName: `${user.firstName} ${user.lastName}`,
         role: user.role === 'creator' ? 'CREATOR' : 'ATTENDEE',
         isEmailVerified: user.isEmailVerified,
         createdAt: user.createdAt,
       },
-      ...tokens,
     };
   }
 
@@ -63,19 +62,10 @@ export class AuthController {
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async login(@Body() dto: LoginDto) {
-    const user = await this.authService.validateUser(dto.email, dto.password);
-    if (!user) throw new Error('Invalid credentials');
-    const tokens = await this.authService.login(user);
+    const tokens = await this.authService.login(dto);
 
     return {
       message: 'Logged in succesfully',
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: `${user.firstName} ${user.lastName}`,
-        role: user.role,
-        isEmailVerified: user.isEmailVerified,
-      },
       ...tokens,
     };
   }

@@ -14,8 +14,8 @@ describe('PaymentsService', () => {
     findOne: jest.fn().mockResolvedValue({
       id: 'p1',
       reference: 'ref',
-      tier: { id: 't1' },
-      qty: 1,
+      type: { id: 't1' },
+      quantity: 1,
       fulfilled: false,
     }),
   };

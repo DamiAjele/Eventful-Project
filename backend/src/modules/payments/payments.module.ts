@@ -2,12 +2,16 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PaymentsService } from './payments.service';
 import PaymentsController from './payments.controller';
+import { OrderModule } from '../orders/order.module';
 import { Payment } from './entities/payment.entity';
-import { TicketTier } from '../events/entities/ticket-tier.entity';
+import { TicketType } from '../events/entities/ticket-type.entity';
 import { Ticket } from '../tickets/entities/ticket.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Payment, TicketTier, Ticket])],
+  imports: [
+    TypeOrmModule.forFeature([Payment, TicketType, Ticket]),
+    OrderModule,
+  ],
   providers: [PaymentsService],
   controllers: [PaymentsController],
   exports: [PaymentsService],
