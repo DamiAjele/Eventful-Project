@@ -21,6 +21,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UserRole } from '../users/entities/user.entity';
 import { Roles } from '../auth/roles.decorator';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
@@ -58,7 +59,6 @@ export class EventsController {
   }
 
   @Post(':eventId/ticket-type')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
   @ApiOperation({ summary: 'Add a ticket type to an existing event' })
   @ApiBody({ type: CreateTicketTierDto })
@@ -75,7 +75,6 @@ export class EventsController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR, UserRole.ATTENDEE)
   @ApiOperation({ summary: 'Get event details' })
   @ApiCreatedResponse({
@@ -88,7 +87,6 @@ export class EventsController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
   @ApiOperation({ summary: 'Update event details' })
   @ApiBody({ type: updateEventDto })
@@ -102,7 +100,6 @@ export class EventsController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR, UserRole.ATTENDEE)
   @ApiOperation({ summary: 'Get all events' })
   @ApiCreatedResponse({

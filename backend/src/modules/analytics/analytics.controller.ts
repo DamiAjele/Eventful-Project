@@ -10,12 +10,12 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UserRole } from '../users/entities/user.entity';
 import { Roles } from '../auth/roles.decorator';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('analytics')
 export class AnalyticsController {
   constructor(private readonly analytics: AnalyticsService) {}
 
   @Get('events/:eventId/summary')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
   @ApiOperation({ summary: 'Get event summary' })
   @ApiCreatedResponse({

@@ -20,6 +20,7 @@ import { UserRole } from '../users/entities/user.entity';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('payments')
 @Controller('payments')
 export class PaymentsController {
@@ -43,7 +44,6 @@ export class PaymentsController {
     description: 'Invalid payment initialization request',
   })
   @Post('initialize-order')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ATTENDEE, UserRole.CREATOR)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Initialize a payment for an order' })

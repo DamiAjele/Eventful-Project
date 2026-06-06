@@ -11,6 +11,7 @@ import { Roles } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('tickets')
 export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
@@ -30,7 +31,6 @@ export class TicketsController {
   })
   @ApiBadRequestResponse({ description: 'Invalid purchase request' })
   @Post('purchase')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ATTENDEE, UserRole.CREATOR)
   async purchase(
     @Body() body: { tierId: string; qty?: number },

@@ -11,6 +11,7 @@ import { UserRole } from '../users/entities/user.entity';
 import { Roles } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('qr')
 export class QrController {
   constructor(private readonly qrService: QrService) {}
@@ -51,7 +52,6 @@ export class QrController {
   })
   @ApiCreatedResponse({ description: 'qr validated successfully' })
   @ApiBadRequestResponse({ description: 'Invalid QR code' })
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ATTENDEE, UserRole.CREATOR)
   @Post('validate')
   async validate(

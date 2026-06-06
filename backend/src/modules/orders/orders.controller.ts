@@ -12,13 +12,13 @@ import { UserRole } from '../users/entities/user.entity';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('orders')
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ATTENDEE, UserRole.CREATOR)
   @ApiOperation({ summary: 'Create an order' })
   @ApiBody({ type: CreateOrderDto })

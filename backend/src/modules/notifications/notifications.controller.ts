@@ -13,6 +13,7 @@ import { Roles } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('notifications')
 @Controller('notifications')
 export class NotificationsController {
@@ -47,7 +48,6 @@ export class NotificationsController {
     description: 'Invalid reminder scheduling request',
   })
   @Post('reminders')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async createReminder(
@@ -69,7 +69,6 @@ export class NotificationsController {
   }
 
   @Get('list')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async listNotifications(@Query('limit') limit?: string) {
@@ -78,7 +77,6 @@ export class NotificationsController {
   }
 
   @Get('reminders')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async listReminders(@Query('limit') limit?: string) {
