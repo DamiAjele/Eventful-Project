@@ -16,6 +16,7 @@ import { UserRole } from '../users/entities/user.entity';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -27,7 +28,6 @@ export class UsersController {
   })
   @ApiBadRequestResponse({ description: 'User not found' })
   @Get(':email')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
   async findByEmail(@Param('email') email: string) {
     const user = await this.usersService.findByEmail(email);
@@ -46,7 +46,6 @@ export class UsersController {
     type: Object,
   })
   @ApiBadRequestResponse({ description: 'User not found' })
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.CREATOR)
   @Get('/:id')
   async findById(@Param('id') id: string) {
@@ -62,6 +61,19 @@ export class UsersController {
         role: user.role,
       },
     };
+  }
+
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiCreatedResponse({
+    description: 'Users found successfully',
+    type: Object,
+  })
+  @ApiBadRequestResponse({ description: 'Users not found' })
+  @Roles(UserRole.CREATOR)
+  @Get('get-users')
+  async getAllUsers() {
+    const users = await this.usersService.getAllUsers();
+    return users;
   }
 
   // @ApiOperation({ summary: 'Set refresh token hash' })

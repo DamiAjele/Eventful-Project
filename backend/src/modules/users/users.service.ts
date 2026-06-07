@@ -50,6 +50,14 @@ export class UsersService {
     return u;
   }
 
+  async getAllUsers() {
+    const users = await this.usersRepo.find({
+      relations: ['tickets', 'events'],
+    });
+
+    return users;
+  }
+
   async setRefreshTokenHash(userId: string, hash: string) {
     const result = await this.usersRepo.update(
       { id: userId },
