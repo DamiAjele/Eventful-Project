@@ -9,9 +9,16 @@ import { TicketTypeService } from './ticket-type.service';
 import { PaystackWebhookController } from '../payments/paystack-webhook.controller';
 import { EventsModule } from '../events/events.module';
 import { OrdersController } from './orders.controller';
+import TicketsModule from '../tickets/tickets.module';
+import PaymentsModule from '../payments/payments.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, OrderItem, Ticket]), EventsModule],
+  imports: [
+    TypeOrmModule.forFeature([Order, OrderItem, Ticket]),
+    EventsModule,
+    TicketsModule,
+    PaymentsModule,
+  ],
   providers: [OrderService, OrderRepository, TicketTypeService],
   controllers: [PaystackWebhookController, OrdersController],
   exports: [OrderService, OrderRepository],

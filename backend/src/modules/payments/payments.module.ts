@@ -14,7 +14,7 @@ import { Ticket } from '../tickets/entities/ticket.entity';
   ],
   providers: [PaymentsService],
   controllers: [PaymentsController],
-  exports: [PaymentsService],
+  exports: [TypeOrmModule, PaymentsService],
 })
 export class PaymentsModule {}
 
