@@ -6,6 +6,7 @@ import {
   OneToMany,
   OneToOne,
   JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 import { OrderItem } from './order-item.entity';
 import { OrderStatus } from './order-status.enum';
@@ -22,7 +23,7 @@ export class Order {
   @OneToOne(() => User, (user) => user.orders, { eager: true })
   userId!: User;
 
-  @OneToOne(() => Event, (event) => event.orders, { eager: true })
+  @ManyToOne(() => Event, (event) => event.orders, { eager: true })
   eventId!: Event;
 
   @OneToOne(() => Ticket, (ticket) => ticket.order, { eager: true })

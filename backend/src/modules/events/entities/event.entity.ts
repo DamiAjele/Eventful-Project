@@ -48,10 +48,7 @@ export class Event {
   })
   tiers?: TicketType[];
 
-  @OneToMany(() => Order, (order) => order.eventId, {
-    cascade: true,
-    eager: true,
-  })
+  @OneToMany(() => Order, (order) => order.eventId)
   orders?: Order[];
 
   @CreateDateColumn()
