@@ -72,8 +72,7 @@ export class UsersController {
   @Roles(UserRole.CREATOR)
   @Get('get-users')
   async getAllUsers() {
-    const users = await this.usersService.getAllUsers();
-    return users;
+    return this.usersService.getAllUsers();
   }
 
   // @ApiOperation({ summary: 'Set refresh token hash' })
