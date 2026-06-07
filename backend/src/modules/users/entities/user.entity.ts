@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Event } from '../../events/entities/event.entity';
 import { Ticket } from '../../tickets/entities/ticket.entity';
+import { Order } from '../../orders/entities/order.entity';
 
 export enum UserRole {
   ATTENDEE = 'attendee',
@@ -43,6 +44,9 @@ export class User {
 
   @OneToMany(() => Ticket, (ticket) => ticket.userId)
   tickets?: Ticket[];
+
+  @OneToMany(() => Order, (order) => order.userId)
+  orders?: Order[];
 
   @Column({ type: 'text', nullable: true })
   refreshTokenHash?: string | null;

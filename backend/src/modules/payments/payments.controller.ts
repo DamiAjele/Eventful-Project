@@ -14,6 +14,7 @@ import {
   ApiBody,
   ApiCreatedResponse,
   ApiBadRequestResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UserRole } from '../users/entities/user.entity';
@@ -22,6 +23,7 @@ import { RolesGuard } from '../auth/roles.guard';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('payments')
+@ApiBearerAuth()
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}

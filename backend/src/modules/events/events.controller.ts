@@ -13,6 +13,7 @@ import {
   ApiBody,
   ApiCreatedResponse,
   ApiBadRequestResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CreateEventDto, updateEventDto } from '../events/dto/event.dto';
 import { CreateTicketTierDto } from './dto/ticket-type.dto';
@@ -22,6 +23,7 @@ import { UserRole } from '../users/entities/user.entity';
 import { Roles } from '../auth/roles.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}

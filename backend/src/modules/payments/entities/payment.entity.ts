@@ -4,8 +4,10 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
+  OneToOne,
 } from 'typeorm';
 import { TicketType } from '../../events/entities/ticket-type.entity';
+import { Order } from '../../orders/entities/order.entity';
 
 export enum PaymentStatus {
   PENDING = 'pending',
@@ -23,6 +25,12 @@ export class Payment {
 
   @ManyToOne(() => TicketType, { eager: true })
   type!: TicketType;
+
+  @OneToOne(() => Order, (order) => order.paymentReference, {
+    eager: true,
+    cascade: true,
+  })
+  order!: Order;
 
   @Column({ type: 'int', default: 1 })
   qty!: number;

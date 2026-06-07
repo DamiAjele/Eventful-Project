@@ -5,10 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { TicketType } from './ticket-type.entity';
 import { ManyToOne } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Order } from '../../orders/entities/order.entity';
+import { Ticket } from '../../tickets/entities/ticket.entity';
 
 @Entity({ name: 'events' })
 export class Event {
@@ -27,6 +30,9 @@ export class Event {
   @ManyToOne(() => User, (user) => user.events, { eager: true })
   userId!: User;
 
+  @OneToOne(() => Ticket, (ticket) => ticket.eventId, { cascade: true })
+  ticket!: Ticket;
+
   @Column({ type: 'timestamptz' })
   startAt?: Date;
 
@@ -41,6 +47,12 @@ export class Event {
     eager: true,
   })
   tiers?: TicketType[];
+
+  @OneToMany(() => Order, (order) => order.eventId, {
+    cascade: true,
+    eager: true,
+  })
+  orders?: Order[];
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -5,6 +5,7 @@ import {
   ApiBody,
   ApiCreatedResponse,
   ApiBadRequestResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { UserRole } from '../users/entities/user.entity';
 import { Roles } from '../auth/roles.decorator';
@@ -12,6 +13,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
 @Controller('tickets')
 export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}

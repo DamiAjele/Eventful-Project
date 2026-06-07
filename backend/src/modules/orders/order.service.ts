@@ -4,7 +4,9 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderStatus } from './entities/order-status.enum';
 import { EventsService } from '../events/events.service';
 import { TicketTypeService } from './ticket-type.service';
-import { v4 as uuidv4 } from 'uuid';
+import Ticket from '../tickets/entities/ticket.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class OrderService {
@@ -12,6 +14,7 @@ export class OrderService {
     private readonly orderRepo: OrderRepository,
     private readonly eventsService: EventsService,
     private readonly ticketTypeService: TicketTypeService,
+    @InjectRepository(Ticket) private ticketRepo: Repository<Ticket>,
   ) {}
 
   async createOrder(userId: string, dto: CreateOrderDto) {
@@ -27,7 +30,7 @@ export class OrderService {
         item.ticketTypeId as string,
       );
 
-      if (!ticketType || ticketType.available < item.quantity) {
+      if (!ticketType || ticketType.remainingQuantity < item.quantity) {
         throw new BadRequestException('Insufficient ticket availability');
       }
 
@@ -55,7 +58,7 @@ export class OrderService {
       totalAmount: total,
       expiresAt,
       items: orderItems,
-    } as any);
+    });
 
     return order;
   }
@@ -68,46 +71,29 @@ export class OrderService {
     await this.orderRepo.updateStatus(orderId, OrderStatus.PAID);
 
     // generate tickets here
-    const tickets: any[] = [];
-    for (const item of order.items) {
-      for (let i = 0; i < Number(item.quantity); i++) {
-        tickets.push({
-          eventId: order.eventId,
-          userId: order.userId,
-          qrCode: uuidv4(),
-        });
-      }
-    }
-
-    await this.orderRepo.saveTickets(tickets);
+    const ticket = this.ticketRepo.create({
+      order,
+      eventId: order.eventId,
+      userId: order.userId,
+    });
+    await this.ticketRepo.save(ticket);
 
     return { message: 'Order paid and tickets issued' };
   }
 
   async markOrderAsPaidByReference(reference: string) {
-    const order = await this.orderRepo.findByReference(reference as string);
+    const order = await this.orderRepo.findByReference(reference);
 
     if (!order) {
       throw new BadRequestException('Order not found');
     }
 
-    if (order.status === OrderStatus.PAID) return { message: 'Already paid' };
+    if ((order.status as unknown as OrderStatus) === OrderStatus.PAID)
+      return { message: 'Already paid' };
 
     await this.orderRepo.updateStatus(order.id, OrderStatus.PAID);
 
     // generate tickets
-    const tickets: any[] = [];
-    for (const item of order.items) {
-      for (let i = 0; i < Number(item.quantity); i++) {
-        tickets.push({
-          eventId: order.eventId,
-          userId: order.userId,
-          qrCode: uuidv4(),
-        });
-      }
-    }
-
-    await this.orderRepo.saveTickets(tickets);
 
     return { message: 'Order marked paid and tickets generated' };
   }

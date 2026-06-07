@@ -4,6 +4,7 @@ import {
   ApiOperation,
   ApiBody,
   ApiCreatedResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -13,6 +14,7 @@ import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
 @ApiTags('orders')
 @Controller('orders')
 export class OrdersController {

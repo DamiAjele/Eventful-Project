@@ -53,7 +53,7 @@ export class EventsService {
   }
 
   async findAllEvents() {
-    return this.eventsRepo.find({ relations: ['tiers'] });
+    return this.eventsRepo.find({ relations: ['tiers', 'ticket'] });
   }
 }
 

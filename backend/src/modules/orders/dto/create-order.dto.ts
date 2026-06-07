@@ -12,4 +12,12 @@ export class CreateOrderDto {
     ticketTypeId: string;
     quantity: number;
   }[];
+
+  @ApiProperty()
+  @IsNotEmpty()
+  totalAmount?: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  expiresAt?: Date;
 }

@@ -7,6 +7,7 @@ import {
   ApiBody,
   ApiCreatedResponse,
   ApiBadRequestResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { UserRole } from '../users/entities/user.entity';
 import { Roles } from '../auth/roles.decorator';
@@ -15,6 +16,7 @@ import { RolesGuard } from '../auth/roles.guard';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('notifications')
+@ApiBearerAuth()
 @Controller('notifications')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
