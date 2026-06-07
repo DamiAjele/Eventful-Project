@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User, UserRole } from './entities/user.entity';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -50,7 +51,11 @@ export class UsersService {
   }
 
   async setRefreshTokenHash(userId: string, hash: string) {
-    await this.usersRepo.update({ id: userId }, { refreshTokenHash: hash });
+    const result = await this.usersRepo.update(
+      { id: userId },
+      { refreshTokenHash: hash },
+    );
+    Logger.log(result);
   }
 
   async removeRefreshToken(userId: string) {

@@ -8,7 +8,6 @@ import {
 import { UsersService } from './users.service';
 import {
   ApiOperation,
-  ApiBody,
   ApiCreatedResponse,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
@@ -16,7 +15,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UserRole } from '../users/entities/user.entity';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { Post, Body } from '@nestjs/common';
 
 @Controller('users')
 export class UsersController {
@@ -66,20 +64,20 @@ export class UsersController {
     };
   }
 
-  @ApiOperation({ summary: 'Set refresh token hash' })
-  @ApiBody({ type: String, description: 'User ID' })
-  @ApiCreatedResponse({
-    description: 'Refresh token hash set successfully',
-    type: Object,
-  })
-  @ApiBadRequestResponse({ description: 'Failed to set refresh token hash' })
-  @Post('setRefreshTokenHash')
-  async setRefreshTokenHash(
-    @Body('userId') userId: string,
-    @Body('hash') hash: string,
-  ) {
-    return this.usersService.setRefreshTokenHash(userId, hash);
-  }
+  // @ApiOperation({ summary: 'Set refresh token hash' })
+  // @ApiBody({ type: String, description: 'User ID' })
+  // @ApiCreatedResponse({
+  //   description: 'Refresh token hash set successfully',
+  //   type: Object,
+  // })
+  // @ApiBadRequestResponse({ description: 'Failed to set refresh token hash' })
+  // @Post('setRefreshTokenHash')
+  // async setRefreshTokenHash(
+  //   @Body('userId') userId: string,
+  //   @Body('hash') hash: string,
+  // ) {
+  //   return this.usersService.setRefreshTokenHash(userId, hash);
+  // }
 }
 
 export default UsersController;

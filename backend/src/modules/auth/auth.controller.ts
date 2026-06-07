@@ -1,10 +1,9 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Req } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LoginDto } from '../users/dto/login.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
   ApiOperation,
   ApiBody,
@@ -66,38 +65,40 @@ export class AuthController {
 
     return {
       message: 'Logged in succesfully',
+      user: {
+        email: dto.email,
+      },
       ...tokens,
     };
   }
 
-  @ApiOperation({ summary: 'Refresh access token' })
-  @ApiBody({ type: Object, description: 'Refresh token' })
-  @ApiCreatedResponse({
-    description: 'Access token refreshed successfully',
-    type: Object,
-  })
-  @ApiBadRequestResponse({ description: 'Invalid refresh token' })
-  @UseGuards(JwtAuthGuard)
-  @Post('refresh')
-  async refresh(@Req() req: any, @Body() body: { refreshToken: string }) {
-    const userId = req.user?.sub;
-    return this.authService.refreshTokens(userId, body.refreshToken);
-  }
-  @ApiOperation({
-    summary: 'Generate new access and refresh tokens for a user',
-  })
-  @ApiBody({ type: Object, description: 'User ID' })
-  @ApiCreatedResponse({
-    description: 'Tokens generated successfully',
-    type: Object,
-  })
-  @ApiBadRequestResponse({ description: 'User not found' })
-  @Post('generate-tokens')
-  async generateTokens(@Body('userId') userId: string) {
-    const user = await this.usersService.findById(userId);
-    if (!user) throw new Error('User not found');
-    return this.authService.generateTokens(user);
-  }
+  // @ApiOperation({ summary: 'Refresh access token' })
+  // @ApiBody({ type: Object, description: 'Refresh token' })
+  // @ApiCreatedResponse({
+  //   description: 'Access token refreshed successfully',
+  //   type: Object,
+  // })
+  // @ApiBadRequestResponse({ description: 'Invalid refresh token' })
+  // @Post('refresh')
+  // async refresh(@Req() req: any, @Body() body: { refreshToken: string }) {
+  //   const userId = req.user?.sub;
+  //   return this.authService.refreshTokens(userId, body.refreshToken);
+  // }
+  // @ApiOperation({
+  //   summary: 'Generate new access and refresh tokens for a user',
+  // })
+  // @ApiBody({ type: Object, description: 'User ID' })
+  // @ApiCreatedResponse({
+  //   description: 'Tokens generated successfully',
+  //   type: Object,
+  // })
+  // @ApiBadRequestResponse({ description: 'User not found' })
+  // @Post('generate-tokens')
+  // async generateTokens(@Body('userId') userId: string) {
+  //   const user = await this.usersService.findById(userId);
+  //   if (!user) throw new Error('User not found');
+  //   return this.authService.generateTokens(user);
+  // }
 
   @ApiOperation({ summary: 'Logout a user' })
   @ApiBody({ type: Object, description: 'User ID' })
@@ -107,8 +108,8 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ description: 'User not found' })
   @Post('logout')
-  async logout(@Body('userId') userId: string) {
-    const user = await this.usersService.findById(userId);
+  async logout(@Req() req) {
+    const user = req.user.id;
     if (!user) throw new Error('User not found');
     await this.authService.logout(user.id);
     return { message: 'Logged out successfully' };
