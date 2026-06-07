@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
@@ -17,7 +17,7 @@ import PaymentsModule from '../payments/payments.module';
     TypeOrmModule.forFeature([Order, OrderItem, Ticket]),
     EventsModule,
     TicketsModule,
-    PaymentsModule,
+    forwardRef(() => PaymentsModule),
   ],
   providers: [OrderService, OrderRepository, TicketTypeService],
   controllers: [PaystackWebhookController, OrdersController],
