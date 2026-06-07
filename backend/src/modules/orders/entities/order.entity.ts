@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   OneToMany,
   OneToOne,
+  JoinColumn,
 } from 'typeorm';
 import { OrderItem } from './order-item.entity';
 import { OrderStatus } from './order-status.enum';
@@ -39,12 +40,9 @@ export class Order {
   @CreateDateColumn()
   createdAt!: Date;
 
-  @OneToOne(() => Payment, (pay) => pay.order, {
-    eager: true,
-    nullable: true,
-  })
-  paymentReference?: Payment;
-
+  @OneToOne(() => Payment, (payment) => payment.order, { eager: true }) // Keep this one
+  @JoinColumn()
+  paymentReference!: Payment;
   @OneToMany(() => OrderItem, (item) => item.order, { cascade: true })
   items!: OrderItem[];
 }

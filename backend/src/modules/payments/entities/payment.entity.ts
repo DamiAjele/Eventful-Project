@@ -26,10 +26,7 @@ export class Payment {
   @ManyToOne(() => TicketType, { eager: true })
   type!: TicketType;
 
-  @OneToOne(() => Order, (order) => order.paymentReference, {
-    eager: true,
-    cascade: true,
-  })
+  @OneToOne(() => Order, (order) => order.paymentReference)
   order!: Order;
 
   @Column({ type: 'int', default: 1 })
