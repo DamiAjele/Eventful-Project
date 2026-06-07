@@ -21,6 +21,18 @@ import { RolesGuard } from '../auth/roles.guard';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiCreatedResponse({
+    description: 'Users found successfully',
+    type: Object,
+  })
+  @ApiBadRequestResponse({ description: 'Users not found' })
+  @Roles(UserRole.CREATOR)
+  @Get('get-users')
+  async getAllUsers() {
+    return this.usersService.getAllUsers();
+  }
+
   @ApiOperation({ summary: 'Get user by email' })
   @ApiCreatedResponse({
     description: 'User found successfully',
@@ -61,18 +73,6 @@ export class UsersController {
         role: user.role,
       },
     };
-  }
-
-  @ApiOperation({ summary: 'Get all users' })
-  @ApiCreatedResponse({
-    description: 'Users found successfully',
-    type: Object,
-  })
-  @ApiBadRequestResponse({ description: 'Users not found' })
-  @Roles(UserRole.CREATOR)
-  @Get('get-users')
-  async getAllUsers() {
-    return this.usersService.getAllUsers();
   }
 
   // @ApiOperation({ summary: 'Set refresh token hash' })
