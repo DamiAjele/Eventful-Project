@@ -20,27 +20,26 @@ async function bootstrap() {
   app.enableCors({ origin: process.env.FRONTEND_URL ?? true });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  if (process.env.NODE_ENV !== 'production') {
-    const config = new DocumentBuilder()
-      .setTitle('Eventful API')
-      .setDescription('Eventful Ticketing Platform API')
-      .setVersion('1.0')
-      .addBearerAuth(
-        {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          name: 'JWT',
-          description: 'Enter JWT token',
-          in: 'header',
-        },
-        'JWT-auth',
-      )
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
-    Logger.log('Swagger docs available at /api/docs');
-  }
+  const config = new DocumentBuilder()
+    .setTitle('Eventful API')
+    .setDescription('Eventful Ticketing Platform API')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+  Logger.log('Swagger docs available at /api/docs');
+
   await app.listen(port);
   Logger.log(`Server running at port ${port}`);
 }
