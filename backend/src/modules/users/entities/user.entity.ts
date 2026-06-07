@@ -7,6 +7,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Event } from '../../events/entities/event.entity';
+import { Ticket } from '../../tickets/entities/ticket.entity';
 
 export enum UserRole {
   ATTENDEE = 'attendee',
@@ -39,6 +40,9 @@ export class User {
 
   @OneToMany(() => Event, (event) => event.userId)
   events?: Event[];
+
+  @OneToMany(() => Ticket, (ticket) => ticket.userId)
+  tickets?: Ticket[];
 
   @Column({ type: 'text', nullable: true })
   refreshTokenHash?: string | null;

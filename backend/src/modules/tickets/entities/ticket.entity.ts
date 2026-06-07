@@ -16,8 +16,11 @@ export class Ticket {
   @ManyToOne(() => TicketType, (type) => type.tickets, { eager: true })
   type!: TicketType;
 
-  @ManyToOne(() => User, { nullable: true, eager: true })
-  userId!: User | null;
+  @ManyToOne(() => User, (user) => user.tickets, {
+    nullable: true,
+    eager: true,
+  })
+  userId?: User | null;
 
   @Column({ unique: true })
   code!: string;

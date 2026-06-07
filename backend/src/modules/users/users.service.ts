@@ -52,7 +52,7 @@ export class UsersService {
 
   async getAllUsers() {
     const users = await this.usersRepo.find({
-      relations: ['tickets', 'events'],
+      relations: ['events'],
     });
 
     return users;
