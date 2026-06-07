@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Post, Param } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
@@ -108,8 +108,8 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ description: 'User not found' })
   @Post('logout')
-  async logout(@Req() req) {
-    const user = req.user.id;
+  async logout(@Param('userId') userId: string) {
+    const user = await this.usersService.findById(userId);
     if (!user) throw new Error('User not found');
     await this.authService.logout(user.id);
     return { message: 'Logged out successfully' };
